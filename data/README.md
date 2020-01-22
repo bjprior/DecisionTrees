@@ -1,4 +1,4 @@
-## Attribute Information
+## Attribute Informations
 
 A short description of the 16 attributes provided by 
 https://archive.ics.uci.edu/ml/datasets/letter+recognition

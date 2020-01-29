@@ -1,207 +1,129 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import string as stg
 
-# places data from file in a numpy array
-# note: characteristics in final column are treated as their ascii value
+
+# Reads in file line by line and appends to array
+# Returns a multi-dim array of dimensions numRows x numFeatures+1
+# with the final column being the classification
+# https://stackoverflow.com/questions/19056125/reading-a-file-into-a-multidimensional-array-with-python
 def parseFile(fname):
     data = []
-
     with open(fname) as file:
         for line in file:
+            # New line character needs to be removed
             line = line.strip()
-            characteristic = line[-1]
-            line = line[:-2]
-            attribute_array = [int(digit) for digit in line.split(',')]
-            attribute_array.append(ord(characteristic))
-            data.append(attribute_array)
-
+            row = [int(attribute) for attribute in line[:-2].split(",")]
+            row.append(ord(line[-1]))
+            data.append(row)
     return np.array(data)
 
-# counts the occurences of a certain character (i.e. letter) in the dataset
-def characteristicOccurence(data):
-    characteristicCount = np.zeros([26], dtype=int)
 
-    characteristicData = data[:, -1]
-    for letter in stg.ascii_uppercase:
-        characteristicCount[ord(letter) - 65] = np.count_nonzero(characteristicData == ord(letter))
+def attributesToScatterData(data):
+    attributeNumber = 0
+    attribute = []
+    attributeValue = []
+    frequency = []
 
-    return np.array(characteristicCount)
+    # For each column in the data append the frequency value for each attributeValue that is present
+    for column in data[:, :-1].transpose():
+        setAttributeValueFreqFromAttributeColumn(attribute, attributeValue, frequency, column, attributeNumber)
+        attributeNumber += 1
+    return attribute, attributeValue, frequency
 
-# create a subarray that only considers characteristics with value
-def shrunkCharacteristicDataset(data):
-    shrunked = []
 
-    countCharacteristics = characteristicOccurence(data)
-    index = 0
-    for char in countCharacteristics:
-        if(char > 0):
-            shrunked.append([index + 65, char])
-        index += 1
-    return np.array(shrunked)
+# Returns the classification and percentage occurence of that class for a data set
+def getClassFreq(dataSet):
+    classification = []
+    normFrac = []
+    # Get characteristic data from final column of the datasets
+    setAttributeValueFreqFromAttributeColumn([], classification, normFrac, [chr(i) for i in dataSet[:, -1]], "")
+    return classification, np.array([i * 100 for i in normFrac])
 
-# helper function to convert a numpy array of characteristics from ascii to their corresponding alpha value.
-def asciiArrayConverter(data):
-    charVersionArray = []
-    index = 0
-    for char in data:
-        charVersionArray.append(chr(char))
-        index += 1
-    return np.array(charVersionArray)
 
-# returns the average of each attribute in an array as well as the min/max of each attribute in other array
-def averageMaxMinAttributes(data):
-    av = []
-    mM = []
-    dataTranspose = data.T
+def setAttributeValueFreqFromAttributeColumn(attributeList, attributeValueList, frequencyList, dataColumn,
+                                             attributeName):
+    normFactor = 1 / len(dataColumn)
+    attributeValueFreq = {}
 
-    for i in dataTranspose:
-        av.append([np.average(i)])
-        mM.append([min(i), max(i)])
-    return np.array(av), np.array(mM)
+    # Create a dictionary with attribute value as the key and frequency as the value
+    for attributeValue in dataColumn:
+        if attributeValue in attributeValueFreq:
+            attributeValueFreq[attributeValue] += 1
+        else:
+            attributeValueFreq[attributeValue] = 1
 
-# counts the number of inconsistent characteristic attributions between truth and noisy
-def numberInstanceNoisy(truth, noisy):
-    counter = 0
-    j = 0
-    for i in truth[: , -1]:
-        if (i != noisy[j][-1]):
-            counter += 1
-        j += 1
-    return counter
+    # Use dicitionay to fill attributeList etc....
+    for attributeValue, k in sorted(attributeValueFreq.items()):
+        attributeList.append(attributeName)
+        attributeValueList.append(attributeValue)
+        frequencyList.append(attributeValueFreq[attributeValue] * normFactor)
+
+
+def plotScatterResults(scatterResults, fname):
+    plt.figure(figsize=(6, 4), dpi=140)
+    plt.scatter(scatterResults[0], scatterResults[1], s=[i * 1000 for i in scatterResults[2]], c='b', alpha=0.7)
+
+    plt.axis([-0.5, max(fullDataScatter[0]) * 1.1, -0.5, max(fullDataScatter[1]) * 1.1])
+    plt.ylabel("Attribute Value")
+    plt.xlabel("Attribute Number")
+    plt.xticks(range(fullData.shape[1] - 1))
+    plt.savefig(fname)
+    plt.show()
+
+
+def plotSideBySideBarChart(xlabels, dataSet1, dataSet1Name, dataSet2, dataSet2Name, fname):
+    plt.figure(figsize=(6, 4), dpi=140)
+    barWidth = 0.4
+    xpos = np.arange(len(xlabels))
+
+    plt.bar(xpos + (barWidth / 2), dataSet1, width=barWidth, label=dataSet1Name)
+    plt.bar(xpos - (barWidth / 2), dataSet2, width=barWidth, label=dataSet2Name)
+
+    plt.ylim(0, np.amax([dataSet2, dataSet1]) * 1.1)
+    plt.ylabel("Percentage Occurrence")
+    plt.xlabel("Character")
+    plt.xticks(xpos, xlabels)
+    plt.legend()
+    plt.savefig(fname)
+    plt.show()
+
+
+def percentageChange(dataSet1, dataSet2):
+    numUnchanged = 0
+    for data in dataSet2:
+        if any((dataSet1[:] == data).all(1)):
+            numUnchanged += 1
+    print(dataSet1.shape[0] - numUnchanged)
+    print("Percentage change: ")
+    print((dataSet1.shape[0] - numUnchanged) * 100 / dataSet1.shape[0])
 
 
 if __name__ == "__main__":
-    train_fullData = parseFile("data/train_full.txt")
-    train_noisyData = parseFile("data/train_noisy.txt")
-    train_subData = parseFile("data/train_sub.txt")
+    # Read in data
+    fullData = parseFile("data/train_full.txt")
+    fullDataScatter = attributesToScatterData(fullData)
+    fullDataClassPercent = getClassFreq(fullData);
 
+    subData = parseFile("data/train_sub.txt")
+    subDataClassPercent = getClassFreq(subData);
 
-    # Comparing the 3 Datasets
+    noisyData = parseFile("data/train_noisy.txt")
+    noisyDataClassPercent = getClassFreq(noisyData);
 
-    ## Bar Chart: size of each Dataset (number of columns)
-    train_fullSize = np.size(train_fullData[:, -1])
-    train_noisySize = np.size(train_noisyData[:, -1])
-    train_subSize = np.size(train_subData[:, -1])
-    height = [train_fullSize, train_noisySize, train_subSize]
-    x_axis = [1, 2, 3]
-    bars = ('train_full', 'train_noisy', 'train_sub')
-    plt.bar(x_axis, height, tick_label = bars)
-    plt.ylabel('Size')
-    plt.xlabel('Dataset')
-    plt.title('Size of Datasets')
-    plt.show()
+    # Plot relevant graphs
+    plotScatterResults(fullDataScatter, "q1_1.png")
+    plotSideBySideBarChart(fullDataClassPercent[0], fullDataClassPercent[1], "train_full.txt", subDataClassPercent[1],
+                           "train_sub.txt", "q1_2.png")
+    plotSideBySideBarChart(fullDataClassPercent[0], fullDataClassPercent[1], "train_full.txt", noisyDataClassPercent[1],
+                           "train_sub.txt", "q1_3.png")
 
-    ## Bar Chart: number of occurences of characteristics for all Datasets
-    train_fullLabelOcc = characteristicOccurence(train_fullData)
-    print(train_fullLabelOcc)
-    train_noisyLabelOcc = characteristicOccurence(train_noisyData)
-    train_subLabelOcc = characteristicOccurence(train_subData)
-    n_groups = 26
-    index = np.arange(n_groups)
-    bars = ('train_full', 'train_noisy', 'train_sub')
-    bar_width = 0.2
-    rects1 = plt.bar(index - bar_width, train_fullLabelOcc, width = 0.2,  color = 'b', label='train_full')
-    rects2 = plt.bar(index, train_noisyLabelOcc, width = 0.2, color = 'r', label='train_noisy')
-    rects3 = plt.bar(index + bar_width, train_subLabelOcc, width = 0.2, color = 'g', label='train_sub')
-    plt.xticks(index, ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-                       'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'))
-    plt.ylabel('Size Occurence')
-    plt.xlabel('Characteristic')
-    plt.title('Characteristic Occurences for each Dataset')
-    plt.legend()
-    plt.show()
-
-    # train_full Dataset
-
-    ## Pie Chart: proportion occurence of each characteristic
-    shrunkedfull = shrunkCharacteristicDataset(train_fullData)
-    fig, ax = plt.subplots()
-    countLetters = shrunkedfull[:, 1]
-    corespondingLetters = asciiArrayConverter(shrunkedfull[:, 0])
-    labels = corespondingLetters
-    sizes = countLetters
-    # Analysis of the data
-    mu = np.average(shrunkedfull[:, 1])
-    sigma = np.std(shrunkedfull[:, -1])
-    textstr = '\n'.join((
-        r'$\mu=%.2f$' % (mu,),
-        r'$\sigma=%.2f$' % (sigma,)))
-    ax.pie(sizes, labels=labels, autopct='%1.1f%%')
-    ax.axis('equal')
-    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
-            verticalalignment='top')
-    plt.title('Characteristic Occurence for train_full')
-    plt.show()
-
-    # train_noisy Dataset
-
-    ## Pie Chart: proportion occurence of each characteristic
-    shrunkedfull = shrunkCharacteristicDataset(train_noisyData)
-    fig, ax = plt.subplots()
-    countLetters = shrunkedfull[:, 1]
-    corespondingLetters = asciiArrayConverter(shrunkedfull[:, 0])
-    labels = corespondingLetters
-    sizes = countLetters
-    # Analysis of the data
-    mu = np.average(shrunkedfull[:, 1])
-    sigma = np.std(shrunkedfull[:, -1])
-    textstr = '\n'.join((
-        r'$\mu=%.2f$' % (mu,),
-        r'$\sigma=%.2f$' % (sigma,)))
-    ax.pie(sizes, labels=labels, autopct='%1.1f%%')
-    ax.axis('equal')
-    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
-            verticalalignment='top')
-    plt.title('Characteristic Occurence for train_noisy')
-    plt.show()
-
-    # train_sub Dataset
-    ## Pie Chart: proportion occurence of each characteristic
-    shrunkedfull = shrunkCharacteristicDataset(train_subData)
-    fig, ax = plt.subplots()
-    countLetters = shrunkedfull[:, 1]
-    corespondingLetters = asciiArrayConverter(shrunkedfull[:, 0])
-    labels = corespondingLetters
-    sizes = countLetters
-    # Analysis of the data
-    mu = np.average(shrunkedfull[:, 1])
-    sigma = np.std(shrunkedfull[:, -1])
-    textstr = '\n'.join((
-        r'$\mu=%.2f$' % (mu,),
-        r'$\sigma=%.2f$' % (sigma,)))
-    ax.pie(sizes, labels=labels, autopct='%1.1f%%')
-    ax.axis('equal')
-    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
-            verticalalignment='top')
-    plt.title('Characteristic Occurence for train_sub')
-    plt.show()
-
-    # ######### Attribute Analysis ###################
-
-    attributes = train_fullData[:, 0:-1]
-    fullAverageAttribute, fullMinMaxAttributes = averageMaxMinAttributes(train_fullData[:, 0:-1])
-    noisyAverageAttribute, noisyMinMaxAttributes = averageMaxMinAttributes(train_noisyData[:, 0:-1])
-    subAverageAttribute, subMinMaxAttributes = averageMaxMinAttributes(train_subData[:, 0:-1])
-    #print(minMaxAttributes)
-    # n_groups = np.size(train_fullData[:1]) - 1
-    # print(n_groups)
-    # index = np.arange(n_groups)
-    # bars = ('train_full', 'train_noisy', 'train_sub')
-    # bar_width = 0.2
-    # rects1 = plt.bar(index - bar_width, fullAverageAttribute, width = 0.2,  color = 'b', label='train_full')
-    # rects2 = plt.bar(index, noisyAverageAttribute, width = 0.2, color = 'r', label='train_noisy')
-    # rects3 = plt.bar(index + bar_width, subAverageAttribute, width = 0.2, color = 'g', label='train_sub')
-    # plt.xticks(index, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16'))
-    # plt.ylabel('Size Occurence')
-    # plt.xlabel('Characteristic')
-    # plt.title('Characteristic Occurences for each Dataset')
-    # plt.legend()
-    # plt.show()
-
-    ## QUESTION 1.3
-
-    print(numberInstanceNoisy(train_fullData, train_noisyData)/np.size(train_fullData[:, -1]))
-
-
-
+    # Ouput raw data to terminal
+    print("Class percentages")
+    print(fullDataClassPercent[0])
+    print("Full :")
+    print(fullDataClassPercent[1])
+    print("Sub :")
+    print(subDataClassPercent[1])
+    print("Noisy :")
+    print(noisyDataClassPercent[1])
+    percentageChange(fullData, noisyData)

@@ -22,7 +22,7 @@ class LeafNode(object):
 
     """
 
-    def __init__(self, letter=" "):
+    def __init__(self, letter):
         self.letter = letter
 
 
@@ -73,13 +73,13 @@ class Node(object):
         if len(y) == 0:
             return LeafNode(" ")
         # Check if array is splittable if not return max label
-        elif y_count == 1 or x_count == 1:
-            print(chr(letter))
+        elif y_count == 1 and x_count == 1:
+            #print(chr(letter))
             return LeafNode(letter)
         else:
             self.split_col, self.threshold = ent.findBestNode(total_set)
-            print("Attribute: "+str(self.split_col))
-            print("Threshold: "+str(self.threshold))
+            #print("Attribute: "+str(self.split_col))
+            #print("Threshold: "+str(self.threshold))
             left, right = SplitDataSet(self.split_col, self.threshold, total_set)
 
 
@@ -118,6 +118,7 @@ class DecisionTreeClassifier(object):
     
     """
 
+
     def __init__(self):
         self.is_trained = False
 
@@ -155,7 +156,7 @@ class DecisionTreeClassifier(object):
 
         return self
 
-    def predict(self, x):
+    def predict(self, attributeInstances):
         """ Predicts a set of samples using the trained DecisionTreeClassifier.
         
         Assumes that the DecisionTreeClassifier has already been trained.
@@ -177,16 +178,23 @@ class DecisionTreeClassifier(object):
         if not self.is_trained:
             raise Exception("Decision Tree classifier has not yet been trained.")
 
-        # set up empty N-dimensional vector to store predicted labels 
-        # feel free to change this if needed
-        predictions = np.zeros((x.shape[0],), dtype=np.object)
+        # set up empty list (will convert to numpy array)
+        predictions = list()
+
+        #predictions = np.zeros((attributeInstances.shape[0],), dtype=np.object)
 
         #######################################################################
         #                 ** TASK 2.2: COMPLETE THIS METHOD **
         #######################################################################
 
         # remember to change this if you rename the variable
-        return predictions
+
+        for attributeList in attributeInstances:
+            predictions.append(goDownTree(self, attributeList))
+
+        print(predictions)
+        return np.asarray(predictions)
+
 
 
 def SplitDataSet(attribute, value, data_set):
@@ -212,9 +220,34 @@ def SplitXY(data_set):
 
     return x_s, y_s
 
+#######
+    # HELPER FUNCTION FOR TASK 2.2
+
+def goingDownCurrentBranch(currentNode, attributeEntry): # goes down current branch - returns characteristic if leaf
+    if isinstance(currentNode, LeafNode):
+        return currentNode.letter
+    else:
+        attributePosition = currentNode.split_col
+        threshold = currentNode.threshold
+
+        if (attributeEntry[attributePosition] <= threshold):
+            currentNode = currentNode.left_node
+            return goingDownCurrentBranch(currentNode, attributeEntry)
+        else:
+            currentNode = currentNode.right_node
+            return goingDownCurrentBranch(currentNode, attributeEntry)
+
+def goDownTree(tree, attributeEntry): # goes down tree, returning chracteristic
+    currentNode = tree.decision_tree
+    return chr(goingDownCurrentBranch(currentNode, attributeEntry))
+
+
+
+#####
 
 if __name__ == "__main__":
-    data = dr.parseFile("data/train_full.txt")
+    data = dr.parseFile("data/train_noisy.txt")
     x, y = SplitXY(data)
     Tree = DecisionTreeClassifier()
     Tree.train(x, y)
+    Tree.predict(data)

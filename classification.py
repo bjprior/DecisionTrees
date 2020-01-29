@@ -45,9 +45,9 @@ class Node(object):
         The Node to the right, either leads to another Node or a LeafNode(label)
     """
 
-    def __init__(self, col, thres):
+    def __init__(self, col, threshold):
         self.split_col = col
-        self.threshold = thres
+        self.threshold = threshold
 
     def InduceDecisionTree(self, x, y):
 
@@ -77,7 +77,7 @@ class Node(object):
             return LeafNode(letter)
         else:
             self.split_col, self.threshold = ent.findBestNode(total_set)
-            left, right = SplitDataset(self.split_col, self.threshold, total_set)
+            left, right = SplitDataSet(self.split_col, self.threshold, total_set)
 
             if len(left) != 0:
                 child_left_x, child_left_y = SplitXY(left)
@@ -143,8 +143,8 @@ class DecisionTreeClassifier(object):
         #                 ** TASK 2.1: COMPLETE THIS METHOD **
         #######################################################################
 
-        Decision_Tree = Node(0, 0)
-        Decision_Tree.InduceDecisionTree(x, y)
+        decision_tree = Node(0, 0)
+        decision_tree.InduceDecisionTree(x, y)
 
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
@@ -185,11 +185,11 @@ class DecisionTreeClassifier(object):
         return predictions
 
 
-def SplitDataset(attribute, value, dataset):
+def SplitDataSet(attribute, value, data_set):
     left_list = list()
     right_list = list()
 
-    for row in dataset:
+    for row in data_set:
         if row[attribute] <= value:
             left_list.append(row)
         else:
@@ -201,10 +201,10 @@ def SplitDataset(attribute, value, dataset):
     return left, right
 
 
-def SplitXY(dataset):
-    columns = len(dataset[0])
-    y_s = dataset[:, columns - 1]
-    x_s = dataset[:, :-1]
+def SplitXY(data_set):
+    columns = len(data_set[0])
+    y_s = data_set[:, columns - 1]
+    x_s = data_set[:, :-1]
 
     return x_s, y_s
 

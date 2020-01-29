@@ -74,10 +74,14 @@ class Node(object):
             return LeafNode(" ")
         # Check if array is splittable if not return max label
         elif y_count == 1 or x_count == 1:
+            print(chr(letter))
             return LeafNode(letter)
         else:
             self.split_col, self.threshold = ent.findBestNode(total_set)
+            print("Attribute: "+str(self.split_col))
+            print("Threshold: "+str(self.threshold))
             left, right = SplitDataSet(self.split_col, self.threshold, total_set)
+
 
             if len(left) != 0:
                 child_left_x, child_left_y = SplitXY(left)
@@ -143,8 +147,8 @@ class DecisionTreeClassifier(object):
         #                 ** TASK 2.1: COMPLETE THIS METHOD **
         #######################################################################
 
-        decision_tree = Node(0, 0)
-        decision_tree.InduceDecisionTree(x, y)
+        self.decision_tree = Node(0, 0)
+        self.decision_tree.InduceDecisionTree(x, y)
 
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
@@ -210,7 +214,7 @@ def SplitXY(data_set):
 
 
 if __name__ == "__main__":
-    data = dr.parseFile("data/train_full.txt")
+    data = dr.parseFile("data/toy.txt")
     x, y = SplitXY(data)
     Tree = DecisionTreeClassifier()
     Tree.train(x, y)

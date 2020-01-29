@@ -9,6 +9,8 @@
 
 import numpy as np
 import dataReader as dr
+import entropy as ent
+
 
 class LeafNode(object):
     """
@@ -20,7 +22,7 @@ class LeafNode(object):
 
     """
 
-    def __init__(self, letter = " "):
+    def __init__(self, letter=" "):
         self.letter = letter
 
 
@@ -36,50 +38,65 @@ class Node(object):
     threshold: int
         The threshold value on which the data will be split for the attribute given
 
+    left_set: array
+        The left set of the array with data less than or equal to the threshold value of the attribute
+
+    right_set: array
+        The right set of the array with data greater than the threshold value of the attribute
     """
+
     def __init__(self, col, thres):
         self.split_col = col
         self.threshold = thres
 
-def InduceDecisionTree(x,y):
+    def InduceDecisionTree(self, x, y):
 
-    letters = ["A","C","E","G","O","Q"]
-    count = np.zeros(6)
+        total_set = np.zeros((len(x), (len(x[0]) + 1)), dtype=int)
+        total_set[:, :-1] = x
+        total_set[:, -1] = y
 
-    #Check for multiple letters in data set remaining
+        letter = y[0]
+        row = x[0]
+        y_count = 1
+        x_count = 1
 
-    for i in range(len(y)):
-        for l in range(len(letters)):
-            if(letters[l] == chr(y[i])):
-                count[l] +=1
-    count_max = 0
-    index = 10
-
-    # Get max count and index position
-    for l in range(0,6):
-        if count[l] > max:
-            max = count[l]
-            index = l
-
-    #Check if all samples have same label also checks for 1 remaining
-    if np.nonzero(count_max) == 1:
-        return LeafNode(letters[index])
-    else:
-        Node_new = Node(FindBestNode(x,y))
+        # Check for multiple letters in data set
+        for i in range(len(y)):
+            if y[i] != letter:
+                y_count += 1
+            if x[i].all() != row.all():
+                x_count += 1
 
 
-def SplitDataset(attribute, value, dataset):
-
-    left = list()
-    right = list()
-
-    for row in dataset:
-        if row[attribute] <= value:
-            left.append(row)
+        # Check array is empty, return a null leaf Node, if only one label return letter
+        if len(y) == 0:
+            return LeafNode(" ")
+        elif y_count == 1 or x_count == 1:
+            return LeafNode(letter)
         else:
-            right.append(row)
+            self.split_col, self.threshold = ent.findBestNode(total_set)
 
-    return left,right
+            left, right = SplitDataset(self.split_col, self.threshold, total_set)
+
+            print(left)
+            print(right)
+
+            if len(left) != 0:
+                child_left_x, child_left_y = SplitXY(left)
+                self.left_node = Node(0, 0)
+                self.left_node = Node.InduceDecisionTree(self.left_node, child_left_x, child_left_y)
+            else:
+                self.left_node = LeafNode(" ")
+
+            if len(right) != 0:
+                child_right_x, child_right_y = SplitXY(right)
+                self.right_node = Node(0, 0)
+                self.right_node = Node.InduceDecisionTree(self.right_node, child_right_x, child_right_y)
+            else:
+                self.right_node = LeafNode(" ")
+
+            return self
+
 
 class DecisionTreeClassifier(object):
     """
@@ -101,8 +118,7 @@ class DecisionTreeClassifier(object):
 
     def __init__(self):
         self.is_trained = False
-    
-    
+
     def train(self, x, y):
         """ Constructs a decision tree classifier from data
         
@@ -120,27 +136,23 @@ class DecisionTreeClassifier(object):
             A copy of the DecisionTreeClassifier instance
         
         """
-        
+
         # Make sure that x and y have the same number of instances
         assert x.shape[0] == len(y), \
             "Training failed. x and y must have the same number of instances."
-        
-        
 
         #######################################################################
         #                 ** TASK 2.1: COMPLETE THIS METHOD **
         #######################################################################
 
-        InduceDecisionTree(x,y)
+        Decision_Tree = Node(0,0)
+        Decision_Tree.InduceDecisionTree(x,y)
 
-        
-        
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
-        
+
         return self
-    
-    
+
     def predict(self, x):
         """ Predicts a set of samples using the trained DecisionTreeClassifier.
         
@@ -158,32 +170,50 @@ class DecisionTreeClassifier(object):
             An N-dimensional numpy array containing the predicted class label
             for each instance in x
         """
-        
+
         # make sure that classifier has been trained before predicting
         if not self.is_trained:
             raise Exception("Decision Tree classifier has not yet been trained.")
-        
+
         # set up empty N-dimensional vector to store predicted labels 
         # feel free to change this if needed
         predictions = np.zeros((x.shape[0],), dtype=np.object)
-        
-        
+
         #######################################################################
         #                 ** TASK 2.2: COMPLETE THIS METHOD **
         #######################################################################
-        
-    
+
         # remember to change this if you rename the variable
         return predictions
-        
+
+
+def SplitDataset(attribute, value, dataset):
+    left_list = list()
+    right_list = list()
+
+    for row in dataset:
+        if row[attribute] <= value:
+            left_list.append(row)
+        else:
+            right_list.append(row)
+
+    left = np.array(left_list)
+    right = np.array(right_list)
+
+    return left, right
+
+
+def SplitXY(dataset):
+    columns = len(dataset[0])
+    y_s = dataset[:, columns - 1]
+    x_s = dataset[:, :-1]
+
+    return x_s, y_s
+
 
 if __name__ == "__main__":
-    data = dr.parseFile("data/toy.txt")
-    xs = np.hsplit(data,4)
-    y = xs[3]
-    x = np.hstack((xs[0],xs[1],xs[2]))
 
-    Tree = DecisionTreeClassifier
-
-    Tree.__init__(Tree)
-    Tree.train(Tree,x,y)
+    data = dr.parseFile("data/train_full.txt")
+    x, y = SplitXY(data)
+    Tree = DecisionTreeClassifier()
+    Tree.train(x, y)

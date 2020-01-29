@@ -55,7 +55,7 @@ class Node(object):
         total_set[:, :-1] = x
         total_set[:, -1] = y
 
-        letter = y[0]
+        letter = np.bincount(y).argmax()
         row = x[0]
         y_count = 1
         x_count = 1
@@ -71,15 +71,13 @@ class Node(object):
         # Check array is empty, return a null leaf Node, if only one label return letter
         if len(y) == 0:
             return LeafNode(" ")
+        #Check if array is splittable if not return max label
         elif y_count == 1 or x_count == 1:
             return LeafNode(letter)
         else:
             self.split_col, self.threshold = ent.findBestNode(total_set)
-
             left, right = SplitDataset(self.split_col, self.threshold, total_set)
 
-            print(left)
-            print(right)
 
             if len(left) != 0:
                 child_left_x, child_left_y = SplitXY(left)

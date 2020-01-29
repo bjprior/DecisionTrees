@@ -38,11 +38,11 @@ class Node(object):
     threshold: int
         The threshold value on which the data will be split for the attribute given
 
-    left_set: array
-        The left set of the array with data less than or equal to the threshold value of the attribute
+    left_node: Node
+        The Node to the left, either leads to another Node or a LeafNode(label)
 
-    right_set: array
-        The right set of the array with data greater than the threshold value of the attribute
+    right_node: Node
+        The Node to the right, either leads to another Node or a LeafNode(label)
     """
 
     def __init__(self, col, thres):
@@ -55,29 +55,29 @@ class Node(object):
         total_set[:, :-1] = x
         total_set[:, -1] = y
 
+        # Gets the max label in the data set
         letter = np.bincount(y).argmax()
+
         row = x[0]
         y_count = 1
         x_count = 1
 
-        # Check for multiple letters in data set
+        # Check for multiple letters and differing rows in data set
         for i in range(len(y)):
             if y[i] != letter:
                 y_count += 1
             if x[i].all() != row.all():
                 x_count += 1
 
-
         # Check array is empty, return a null leaf Node, if only one label return letter
         if len(y) == 0:
             return LeafNode(" ")
-        #Check if array is splittable if not return max label
+        # Check if array is splittable if not return max label
         elif y_count == 1 or x_count == 1:
             return LeafNode(letter)
         else:
             self.split_col, self.threshold = ent.findBestNode(total_set)
             left, right = SplitDataset(self.split_col, self.threshold, total_set)
-
 
             if len(left) != 0:
                 child_left_x, child_left_y = SplitXY(left)
@@ -143,8 +143,8 @@ class DecisionTreeClassifier(object):
         #                 ** TASK 2.1: COMPLETE THIS METHOD **
         #######################################################################
 
-        Decision_Tree = Node(0,0)
-        Decision_Tree.InduceDecisionTree(x,y)
+        Decision_Tree = Node(0, 0)
+        Decision_Tree.InduceDecisionTree(x, y)
 
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
@@ -210,7 +210,6 @@ def SplitXY(dataset):
 
 
 if __name__ == "__main__":
-
     data = dr.parseFile("data/train_full.txt")
     x, y = SplitXY(data)
     Tree = DecisionTreeClassifier()

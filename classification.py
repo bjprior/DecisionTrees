@@ -214,7 +214,7 @@ def SplitXY(data_set):
 
 
 if __name__ == "__main__":
-    data = dr.parseFile("data/toy.txt")
+    data = dr.parseFile("data/train_full.txt")
     x, y = SplitXY(data)
     Tree = DecisionTreeClassifier()
     Tree.train(x, y)

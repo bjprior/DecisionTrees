@@ -159,7 +159,6 @@ class DecisionTreeClassifier(object):
         for attributeList in attributeInstances:
             predictions.append(chr(DecisionTreeClassifier.predictInstance(self.rootNode, attributeList)))
 
-        print(predictions)
         return np.asarray(predictions)
 
     @staticmethod

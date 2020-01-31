@@ -7,11 +7,11 @@ def findBestNode(dataSet):
     splitAttribute = -1
     splitAttributeValue = -1
     parentEntropy = calcEntropy(dataSet[-1])
+    bestBoundary = -1
 
     for attribute in range(dataSet.shape[1] - 1):  # Final column is classification so not iterated over
         # Get array of attribute against classification sorted w.r.t attributeValue
-        attributeData = dataSet[:, [attribute, -1]]
-        attributeData = attributeData[attributeData[:, 0].argsort()]
+        attributeData = dataSet[dataSet[:, attribute].argsort()]
 
         attributeValues = np.unique(dataSet[:, attribute])
         # If only 1 attribute value then cannot split over this attribute
@@ -20,7 +20,7 @@ def findBestNode(dataSet):
 
         for attributeValue in attributeValues[:-1]:  # Final attribute value not included as cannot split over it
             # Plus one as slicing inclusive of lower bound and exclusive of upper bound
-            boundary = np.where(attributeData[:, 0] == attributeValue)[0][-1] + 1
+            boundary = np.where(attributeData[:, attribute] == attributeValue)[0][-1] + 1
 
             # Calc entropy of potential child dataSets adjusting for size of child sets
             entropyChild1 = (boundary / len(dataSet)) * calcEntropy(attributeData[:boundary, -1])
@@ -32,8 +32,10 @@ def findBestNode(dataSet):
                 maxInfoGain = infoGain
                 splitAttribute = attribute
                 splitAttributeValue = attributeValue
+                child1 = attributeData[:boundary]
+                child2 = attributeData[boundary:]
 
-    return splitAttribute, splitAttributeValue
+    return splitAttribute, splitAttributeValue, child1, child2
 
 
 def calcEntropy(dataSet):
@@ -45,5 +47,5 @@ def calcEntropy(dataSet):
 
 
 if __name__ == "__main__":
-    dataSet = dataReader.parseFile("data/train_.txt")
+    dataSet = dataReader.parseFile("data/train_full.txt")
     print(findBestNode(dataSet))

@@ -24,6 +24,7 @@ class LeafNode(object):
 
     def __init__(self, letter):
         self.letter = letter
+        print("LeafNode: " + str(chr(letter)))
 
 
 class Node(object):
@@ -45,59 +46,26 @@ class Node(object):
         The Node to the right, either leads to another Node or a LeafNode(label)
     """
 
-    def __init__(self, col, threshold):
-        self.split_col = col
+    def __init__(self, split_col, threshold, leftData, rightData):
+        print("Node: " + str(split_col) + " " + str(threshold))
+        self.split_col = split_col
         self.threshold = threshold
+        self.left_node = Node.induceDecisionTree(leftData[:, :-1], leftData.T[-1])
+        self.right_node = Node.induceDecisionTree(rightData[:, :-1], rightData.T[-1])
 
-    def InduceDecisionTree(self, x, y):
+    @staticmethod
+    def induceDecisionTree(attributes, classification):
+        dataSet = np.array(np.c_[attributes, classification])
 
-        total_set = np.zeros((len(x), (len(x[0]) + 1)), dtype=int)
-        total_set[:, :-1] = x
-        total_set[:, -1] = y
+        attributeRepeats = len(np.unique(dataSet[:, :-1], axis=0))
+        classificationRepeats = len(np.unique(dataSet[:, -1]))
 
-        # Gets the max label in the data set
-        letter = np.bincount(y).argmax()
+        if (len(dataSet) == 1) or (attributeRepeats == 1) or (classificationRepeats == 1):
+            return LeafNode(dataSet[0][-1])
 
-        row = x[0]
-        y_count = 1
-        x_count = 1
+        split_col, threshold, leftChildData, rightChildData = ent.findBestNode(dataSet)
 
-        # Check for multiple letters and differing rows in data set
-        for i in range(len(y)):
-            if y[i] != letter:
-                y_count += 1
-            if x[i].all() != row.all():
-                x_count += 1
-
-        # Check array is empty, return a null leaf Node, if only one label return letter
-        if len(y) == 0:
-            return LeafNode(" ")
-        # Check if array is splittable if not return max label
-        elif y_count == 1 and x_count == 1:
-            #print(chr(letter))
-            return LeafNode(letter)
-        else:
-            self.split_col, self.threshold = ent.findBestNode(total_set)
-            #print("Attribute: "+str(self.split_col))
-            #print("Threshold: "+str(self.threshold))
-            left, right = SplitDataSet(self.split_col, self.threshold, total_set)
-
-
-            if len(left) != 0:
-                child_left_x, child_left_y = SplitXY(left)
-                self.left_node = Node(0, 0)
-                self.left_node = Node.InduceDecisionTree(self.left_node, child_left_x, child_left_y)
-            else:
-                self.left_node = LeafNode(" ")
-
-            if len(right) != 0:
-                child_right_x, child_right_y = SplitXY(right)
-                self.right_node = Node(0, 0)
-                self.right_node = Node.InduceDecisionTree(self.right_node, child_right_x, child_right_y)
-            else:
-                self.right_node = LeafNode(" ")
-
-            return self
+        return Node(split_col, threshold, leftChildData, rightChildData)
 
 
 class DecisionTreeClassifier(object):
@@ -118,9 +86,9 @@ class DecisionTreeClassifier(object):
     
     """
 
-
     def __init__(self):
         self.is_trained = False
+        self.rootNode = None
 
     def train(self, x, y):
         """ Constructs a decision tree classifier from data
@@ -148,8 +116,7 @@ class DecisionTreeClassifier(object):
         #                 ** TASK 2.1: COMPLETE THIS METHOD **
         #######################################################################
 
-        self.decision_tree = Node(0, 0)
-        self.decision_tree.InduceDecisionTree(x, y)
+        self.rootNode = Node.induceDecisionTree(x, y)
 
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
@@ -181,7 +148,7 @@ class DecisionTreeClassifier(object):
         # set up empty list (will convert to numpy array)
         predictions = list()
 
-        #predictions = np.zeros((attributeInstances.shape[0],), dtype=np.object)
+        # predictions = np.zeros((attributeInstances.shape[0],), dtype=np.object)
 
         #######################################################################
         #                 ** TASK 2.2: COMPLETE THIS METHOD **
@@ -190,64 +157,26 @@ class DecisionTreeClassifier(object):
         # remember to change this if you rename the variable
 
         for attributeList in attributeInstances:
-            predictions.append(goDownTree(self, attributeList))
+            predictions.append(chr(DecisionTreeClassifier.predictInstance(self.rootNode, attributeList)))
 
         print(predictions)
         return np.asarray(predictions)
 
-
-
-def SplitDataSet(attribute, value, data_set):
-    left_list = list()
-    right_list = list()
-
-    for row in data_set:
-        if row[attribute] <= value:
-            left_list.append(row)
+    @staticmethod
+    def predictInstance(node, attributeList):
+        if isinstance(node, LeafNode):
+            return node.letter
         else:
-            right_list.append(row)
+            if attributeList[node.split_col] <= node.threshold:
+                return DecisionTreeClassifier.predictInstance(node.left_node, attributeList)
+            else:
+                return DecisionTreeClassifier.predictInstance(node.right_node, attributeList)
 
-    left = np.array(left_list)
-    right = np.array(right_list)
-
-    return left, right
-
-
-def SplitXY(data_set):
-    columns = len(data_set[0])
-    y_s = data_set[:, columns - 1]
-    x_s = data_set[:, :-1]
-
-    return x_s, y_s
-
-#######
-    # HELPER FUNCTION FOR TASK 2.2
-
-def goingDownCurrentBranch(currentNode, attributeEntry): # goes down current branch - returns characteristic if leaf
-    if isinstance(currentNode, LeafNode):
-        return currentNode.letter
-    else:
-        attributePosition = currentNode.split_col
-        threshold = currentNode.threshold
-
-        if (attributeEntry[attributePosition] <= threshold):
-            currentNode = currentNode.left_node
-            return goingDownCurrentBranch(currentNode, attributeEntry)
-        else:
-            currentNode = currentNode.right_node
-            return goingDownCurrentBranch(currentNode, attributeEntry)
-
-def goDownTree(tree, attributeEntry): # goes down tree, returning chracteristic
-    currentNode = tree.decision_tree
-    return chr(goingDownCurrentBranch(currentNode, attributeEntry))
-
-
-
-#####
 
 if __name__ == "__main__":
-    data = dr.parseFile("data/train_noisy.txt")
-    x, y = SplitXY(data)
-    Tree = DecisionTreeClassifier()
-    Tree.train(x, y)
-    Tree.predict(data)
+    data = dr.parseFile("data/toy.txt")
+    x, y = data[:, :-1], data.T[-1]
+    print(y)
+    tree = DecisionTreeClassifier()
+    tree.train(x, y)
+    tree.predict(data)

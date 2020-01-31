@@ -192,7 +192,6 @@ class DecisionTreeClassifier(object):
         for attributeList in attributeInstances:
             predictions.append(goDownTree(self, attributeList))
 
-        print(predictions)
         return np.asarray(predictions)
 
 

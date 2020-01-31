@@ -45,5 +45,5 @@ def calcEntropy(dataSet):
 
 
 if __name__ == "__main__":
-    dataSet = dataReader.parseFile("data/train_.txt")
+    dataSet = dataReader.parseFile("data/toy.txt")
     print(findBestNode(dataSet))

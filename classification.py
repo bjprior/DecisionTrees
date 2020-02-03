@@ -168,7 +168,7 @@ class DecisionTreeClassifier(object):
         if isinstance(node, LeafNode):
             return node.letter
         else:
-            if attributeList[node.split_col] <= node.threshold:
+            if int(attributeList[node.split_col]) <= int(node.threshold):
                 return DecisionTreeClassifier.predictInstance(node.left_node, attributeList)
             else:
                 return DecisionTreeClassifier.predictInstance(node.right_node, attributeList)

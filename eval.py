@@ -235,6 +235,7 @@ class Evaluator(object):
         # You will also need to change this
         macro_f = 0
 
+
         # finding average of the f1 for global
         macro_f = np.average(f)
 

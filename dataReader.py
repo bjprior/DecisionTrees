@@ -6,14 +6,17 @@ import matplotlib.pyplot as plt
 # Returns a multi-dim array of dimensions numRows x numFeatures+1
 # with the final column being the classification
 # https://stackoverflow.com/questions/19056125/reading-a-file-into-a-multidimensional-array-with-python
-def parseFile(fname):
+def parseFile(fname, charateristicsAsInts=False):
     data = []
     with open(fname) as file:
         for line in file:
             # New line character needs to be removed
             line = line.strip()
             row = [int(attribute) for attribute in line[:-2].split(",")]
-            row.append(ord(line[-1]))
+            if charateristicsAsInts:
+                row.append(ord(line[-1]))
+            else:
+                row.append(line[-1])
             data.append(row)
     return np.array(data)
 
@@ -52,7 +55,7 @@ def setAttributeValueFreqFromAttributeColumn(attributeList, attributeValueList, 
         else:
             attributeValueFreq[attributeValue] = 1
 
-    # Use dicitionay to fill attributeList etc....
+    # Use dictionary to fill attributeList etc....
     for attributeValue, k in sorted(attributeValueFreq.items()):
         attributeList.append(attributeName)
         attributeValueList.append(attributeValue)
@@ -100,14 +103,14 @@ def percentageChange(dataSet1, dataSet2):
 
 if __name__ == "__main__":
     # Read in data
-    fullData = parseFile("data/train_full.txt")
+    fullData = parseFile("data/train_full.txt", True)
     fullDataScatter = attributesToScatterData(fullData)
     fullDataClassPercent = getClassFreq(fullData);
 
-    subData = parseFile("data/train_sub.txt")
+    subData = parseFile("data/train_sub.txt", True)
     subDataClassPercent = getClassFreq(subData);
 
-    noisyData = parseFile("data/train_noisy.txt")
+    noisyData = parseFile("data/train_noisy.txt", True)
     noisyDataClassPercent = getClassFreq(noisyData);
 
     # Plot relevant graphs

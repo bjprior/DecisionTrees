@@ -24,7 +24,7 @@ class LeafNode(object):
 
     def __init__(self, letter):
         self.letter = letter
-        print("LeafNode: " + str(chr(letter)))
+        print("LeafNode: " + str(letter))
 
 
 class Node(object):
@@ -157,7 +157,7 @@ class DecisionTreeClassifier(object):
         # remember to change this if you rename the variable
 
         for attributeList in attributeInstances:
-            predictions.append(chr(DecisionTreeClassifier.predictInstance(self.rootNode, attributeList)))
+            predictions.append((DecisionTreeClassifier.predictInstance(self.rootNode, attributeList)))
 
         print(predictions)
         return np.asarray(predictions)
@@ -174,7 +174,7 @@ class DecisionTreeClassifier(object):
 
 
 if __name__ == "__main__":
-    data = dr.parseFile("data/toy.txt")
+    data = dr.parseFile("data/train_full.txt")
     x, y = data[:, :-1], data.T[-1]
     print(y)
     tree = DecisionTreeClassifier()

@@ -87,9 +87,6 @@ class Evaluator(object):
             The accuracy (between 0.0 to 1.0 inclusive)
         """
         
-        # feel free to remove this
-        accuracy = 0.0
-        
         #######################################################################
         #                 ** TASK 3.2: COMPLETE THIS METHOD **
         #######################################################################
@@ -132,12 +129,14 @@ class Evaluator(object):
         #######################################################################
                                                                                             #### NEEDS CHECKING FROM SOMEONE ELSE
         # precision (per characteristic) == TRUTH / TOTAL PREDICTION THAT LETTER
-        index  = 0
+        index = 0
+        print(confusion)
+        print(confusion[:1])
         for letterIndex in range(np.size(confusion[:, -1])):
-            if (np.sum(confusion[:,letterIndex]) == 0):
+            if np.sum(confusion[: letterIndex]) == 0:
                 p[index] = 0
             else:
-                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:,letterIndex])
+                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:letterIndex])
             index += 1
 
         # You will also need to change this        
@@ -179,10 +178,10 @@ class Evaluator(object):
         # recall (per characteristic) == TRUTH / TOTAL TIMES THAT WAS THE TRUE LETTER
         index = 0
         for letterIndex in range(np.size(confusion[:, -1])):
-            if (np.sum(confusion[letterIndex]) == 0):
+            if (np.sum(confusion[:,letterIndex]) == 0):
                 r[index] = 0
             else:
-                r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[letterIndex])
+                r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:,letterIndex])
             index += 1
 
         # You will also need to change this        
@@ -249,5 +248,5 @@ if __name__ == "__main__":
 
     e = Evaluator()
     a = e.confusion_matrix(truth, predictions)
-
-    print(e.f1_score(a))
+    b = e.precision(a)
+   # print(e.f1_score(a))

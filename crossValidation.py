@@ -2,15 +2,15 @@ import numpy as np
 import dataReader as dr
 import classification as cls
 import eval as ev
+from scipy import stats
 
 def k_fold_cross_validation(data_set, k):
-
     accuracy = np.zeros(k)
     tree = cls.DecisionTreeClassifier()
     best_tree = cls.DecisionTreeClassifier()
     max_accuracy = 0
 
-    for i in range(1, k+1):
+    for i in range(1, k + 1):
         testing, training = split_set(data_set, k, i)
         training_x, training_y = training[:, :-1], training.T[-1]
         tree.train(training_x, training_y)
@@ -21,11 +21,32 @@ def k_fold_cross_validation(data_set, k):
         print("Label(" + str(i) + ")" + str(testing_y))
         confusion = eval.confusion_matrix(predictions, testing_y)
         accuracy[i - 1] = eval.accuracy(confusion)
-        if accuracy[i-1] > max_accuracy:
+        if accuracy[i - 1] > max_accuracy:
             best_tree = tree
-        print("Accuracy(" + str(i) + "):" + str(accuracy[i-1]))
+        print("Accuracy(" + str(i) + "):" + str(accuracy[i - 1]))
 
     return accuracy, best_tree
+
+
+def k_decision_trees(training, testing, k):
+    trees = []
+    predictions = list()
+
+    for i in range(1, k+1):
+        trees.append(cls.DecisionTreeClassifier())
+        testing_new, training_new = split_set(training, k, i)
+        training_x, training_y = training_new[:, :-1], training_new.T[-1]
+        trees[i-1].train(training_x, training_y)
+        predictions.append(trees[i-1].predict(testing))
+
+    prediction = np.array(predictions)
+    prediction.astype(str)
+    best_predictions = np.zeros(len(testing))
+    best_predictions.astype(str)
+
+    best_predictions = stats.mode(prediction, axis=0)[0]
+
+    return best_predictions
 
 
 def split_set(data_set, k, fold):
@@ -50,20 +71,47 @@ def split_set(data_set, k, fold):
 
         return testing_set, training_set
 
-def standard_dev(accuracy,k,n):
 
+def standard_dev(accuracy, k, n):
     errors = np.ones(k) - accuracy
-    std_dev = np.sqrt((errors*accuracy)/n)
+    std_dev = np.sqrt((errors * accuracy) / n)
 
-    print(std_dev)
+    return std_dev
 
 
 if __name__ == "__main__":
-    data = dr.parseFile("data/train_sub.txt")
+    full_data = dr.parseFile("data/train_full.txt")
+    test_data = dr.parseFile("data/test.txt")
     k = 10
-    n = len(data)/k
-    accuracy, tree = k_fold_cross_validation(data, k)
-    #accuracy = [0.3333333, 0.533333, 0.7166666666, 0.383333333333, 0.4166666666, 0.48333333333, 0.48333333333
-    #           , 0.36666666666666664, 0.5333333333333333, 0.43333333333333335]
-    standard_dev(accuracy, k, n)
+    n = len(full_data) / k
+    accuracy, cross_tree = k_fold_cross_validation(full_data, k)
 
+    std_dev = standard_dev(accuracy, k, n)
+
+    # Print Answers for Question 3.3
+    for i in range(len(accuracy)):
+        print(str(round(accuracy[i], 4)) + " ± " + str(round(std_dev[i], 4)))
+
+    # Section for testing train_full
+    x, y = full_data[:, :-1], full_data.T[-1]
+    Full_trained = cls.DecisionTreeClassifier()
+    Full_trained.train(x, y)
+    testing_y = test_data.T[-1]
+    full_predict = Full_trained.predict(test_data)
+    cross_predict = cross_tree.predict(test_data)
+    eval = ev.Evaluator()
+    full_confusion = eval.confusion_matrix(full_predict, testing_y)
+    full_accuracy = eval.accuracy(full_confusion)
+    cross_confusion = eval.confusion_matrix(cross_predict, testing_y)
+    cross_accuracy = eval.accuracy(cross_confusion)
+
+    print("Full Accuracy: " + str(full_accuracy))
+    print("Cross Accuracy: " + str(cross_accuracy))
+
+    # Task 3.6
+    k_predict = k_decision_trees(full_data, test_data, k)
+
+    k_confusion = eval.confusion_matrix(k_predict, testing_y)
+    k_accuracy = eval.accuracy(k_confusion)
+
+    print("K Trees Accuracy:" + str(accuracy))

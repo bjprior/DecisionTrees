@@ -164,7 +164,6 @@ class DecisionTreeClassifier(object):
 
     @staticmethod
     def predictInstance(node, attributeList):
-        print(attributeList)
         if isinstance(node, LeafNode):
             return node.letter
         else:

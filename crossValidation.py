@@ -14,8 +14,9 @@ def k_fold_cross_validation(data_set, k):
         training_x, training_y = training[:, :-1], training.T[-1]
         tree.train(training_x, training_y)
         predictions = tree.predict(testing)
-        confusion = ev.confusion_matrix(predictions, training_y)
-        errors[i - 1] = ev.accuracy(confusion)
+        eval = ev.Evaluator()
+        confusion = eval.confusion_matrix(predictions, training_y)
+        errors[i - 1] = eval.accuracy(confusion)
 
     return np.mean(errors)
 
@@ -28,20 +29,19 @@ def split_set(data_set, k, fold):
         print("Incorrect usage: Split value, k greater than sample size or less than 2")
         return
     else:
-        testing_size = len(data_set) / k
-        data_set = np.array(data_set)
-        # np.random.shuffle(data_set) <- randomises the set
-        testing_set = list()
-        training_set = list()
+        width = len(data_set[0])
+        data_splits = np.split(data_set,k)
+        #np.random.shuffle(data_set) <- randomises the set
+        training_set = np.empty(shape=[0, width], dtype=int)
 
-        for i in range(0, len(data_set)):
-            if ((fold - 1) * testing_size + testing_size - 1) >= i >= ((fold - 1) * testing_size):
-                testing_set.append(data_set[i])
+        for i in range(len(data_splits)):
+            if i == fold - 1:
+                testing_set = np.array(data_splits[i])
             else:
-                training_set.append(data_set[i])
+                training_set = np.concatenate((training_set,data_splits[i]),axis=0)
 
-        testing_set = np.asarray(testing_set)
         training_set = np.asarray(training_set)
+
         return testing_set, training_set
 
 
@@ -50,5 +50,5 @@ if __name__ == "__main__":
     n = len(data)
     k = 10
     average_accuracy = k_fold_cross_validation(data, k)
-    err = 1 - average_accuracy
-    standard_deviation = math.sqrt((err*(1-err))/n)
+    #err = 1 - average_accuracy
+    #standard_deviation = math.sqrt((err*(1-err))/n)

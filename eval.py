@@ -64,10 +64,10 @@ class Evaluator(object):
                     if (trueLetter == annotation[index] and predictedLetter == prediction[index]):
                             counter += 1
                     confusion[row][col] = counter
-                row += 1
-                row %= len(class_labels)
-            col += 1
-            col %= len(class_labels)
+                col += 1
+                col %= len(class_labels)
+            row += 1
+            row %= len(class_labels)
 
         return confusion
     
@@ -86,9 +86,6 @@ class Evaluator(object):
         float
             The accuracy (between 0.0 to 1.0 inclusive)
         """
-        
-        # feel free to remove this
-        accuracy = 0.0
         
         #######################################################################
         #                 ** TASK 3.2: COMPLETE THIS METHOD **

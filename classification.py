@@ -24,7 +24,7 @@ class LeafNode(object):
 
     def __init__(self, letter):
         self.letter = letter
-        print("LeafNode: " + str(chr(letter)))
+        #print("LeafNode: " + str(letter))
 
 
 class Node(object):
@@ -47,7 +47,7 @@ class Node(object):
     """
 
     def __init__(self, split_col, threshold, leftData, rightData):
-        print("Node: " + str(split_col) + " " + str(threshold))
+        #print("Node: " + str(split_col) + " " + str(threshold))
         self.split_col = split_col
         self.threshold = threshold
         self.left_node = Node.induceDecisionTree(leftData[:, :-1], leftData.T[-1])
@@ -157,9 +157,9 @@ class DecisionTreeClassifier(object):
         # remember to change this if you rename the variable
 
         for attributeList in attributeInstances:
-            predictions.append(chr(DecisionTreeClassifier.predictInstance(self.rootNode, attributeList)))
+            predictions.append((DecisionTreeClassifier.predictInstance(self.rootNode, attributeList)))
 
-        print(predictions)
+        #print(predictions)
         return np.asarray(predictions)
 
     @staticmethod
@@ -167,16 +167,16 @@ class DecisionTreeClassifier(object):
         if isinstance(node, LeafNode):
             return node.letter
         else:
-            if attributeList[node.split_col] <= node.threshold:
+            if int(attributeList[node.split_col]) <= int(node.threshold):
                 return DecisionTreeClassifier.predictInstance(node.left_node, attributeList)
             else:
                 return DecisionTreeClassifier.predictInstance(node.right_node, attributeList)
 
 
 if __name__ == "__main__":
-    data = dr.parseFile("data/toy.txt")
+    data = dr.parseFile("data/train_full.txt")
     x, y = data[:, :-1], data.T[-1]
-    print(y)
+    #print(y)
     tree = DecisionTreeClassifier()
     tree.train(x, y)
     tree.predict(data)

@@ -18,13 +18,13 @@ def k_fold_cross_validation(data_set, k):
         predictions = tree.predict(testing)
         eval = ev.Evaluator()
         testing_y = testing.T[-1]
-        print("Prediction(" + str(i) + "): " + str(predictions))
-        print("Label(" + str(i) + ")" + str(testing_y))
+        # print("Prediction(" + str(i) + "): " + str(predictions))
+        # print("Label(" + str(i) + ")" + str(testing_y))
         confusion = eval.confusion_matrix(predictions, testing_y)
         accuracy[i - 1] = eval.accuracy(confusion)
         if accuracy[i - 1] > max_accuracy:
             best_tree = tree
-        print("Accuracy(" + str(i) + "):" + str(accuracy[i - 1]))
+        # print("Accuracy(" + str(i) + "):" + str(accuracy[i - 1]))
 
     return accuracy, best_tree
 
@@ -72,6 +72,7 @@ def split_set(data_set, k, fold):
 
         return testing_set, training_set
 
+
 # Answer for
 def standard_dev(accuracy, k, n):
     errors = np.ones(k) - accuracy
@@ -101,8 +102,9 @@ def print_results(predictions, labels, name):
     print("F1 Score: " + str(f1_score))
     print("____________________________________")
 
+
 if __name__ == "__main__":
-    #Data Imports
+    # Data Imports
     full_data = dr.parseFile("data/train_full.txt")
     test_data = dr.parseFile("data/test.txt")
 
@@ -110,13 +112,13 @@ if __name__ == "__main__":
     n = len(full_data) / k
     accuracy, cross_tree = k_fold_cross_validation(full_data, k)
 
-    # Print Answers for Question 3.3
+    # Print Accuracies and Standard Deviations for Question 3.3
     std_dev = standard_dev(accuracy, k, n)
 
     for i in range(len(accuracy)):
         print(str(round(accuracy[i], 4)) + " ± " + str(round(std_dev[i], 4)))
 
-    # Section for testing train_full
+    # Question 3.4
     x, y = full_data[:, :-1], full_data.T[-1]
     Full_trained = cls.DecisionTreeClassifier()
     Full_trained.train(x, y)
@@ -124,10 +126,10 @@ if __name__ == "__main__":
     full_predict = Full_trained.predict(test_data)
     cross_predict = cross_tree.predict(test_data)
 
-    print_results(full_predict,testing_y,"Fully Trained")
-    print_results(cross_predict,testing_y,"K-Fold Trained")
+    print_results(full_predict, testing_y, "Fully Trained")
+    print_results(cross_predict, testing_y, "K-Fold Trained")
 
-    # Task 3.6
+    # Question 3.5
     k_predict = k_decision_trees(full_data, test_data, k)
 
-    print_results(k_predict,testing_y,"K-Fold Mode Predict")
+    print_results(k_predict, testing_y, "K-Fold Mode Predict")

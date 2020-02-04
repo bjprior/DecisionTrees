@@ -224,10 +224,7 @@ class Evaluator(object):
 
         index = 0
         for letterIndex in range(np.size(confusion[:, -1])):
-            if (precision[index] == recall[index]):
-                f[index] == 0
-            else:
-                f[index] = 2 * (precision[index] * recall[index]) / (recall[index] + precision[index])
+            f[index] = 2 * (precision[index] * recall[index]) / (recall[index] + precision[index])
             index += 1
 
         # You will also need to change this

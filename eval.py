@@ -96,9 +96,10 @@ class Evaluator(object):
         truePostive = np.trace(confusion)
         allEvents = np.sum(confusion)
 
-        accuracy = truePostive / allEvents
-
-        return accuracy
+        if(truePostive == 0 or allEvents == 0):
+            return 0
+        else:
+            return truePostive / allEvents
         
     
     def precision(self, confusion):
@@ -223,10 +224,7 @@ class Evaluator(object):
 
         index = 0
         for letterIndex in range(np.size(confusion[:, -1])):
-            if (precision[index] == recall[index]):
-                f[index] == 0
-            else:
-                f[index] = 2 * (precision[index] * recall[index]) / (recall[index] + precision[index])
+            f[index] = 2 * (precision[index] * recall[index]) / (recall[index] + precision[index])
             index += 1
 
         # You will also need to change this

@@ -46,7 +46,7 @@ def k_decision_trees(training, testing, k):
 
     best_predictions = stats.mode(prediction, axis=0)[0]
 
-    return best_predictions
+    return np.array(best_predictions[0, :])
 
 
 def split_set(data_set, k, fold):
@@ -111,7 +111,11 @@ if __name__ == "__main__":
     # Task 3.6
     k_predict = k_decision_trees(full_data, test_data, k)
 
+    #print(k_predict)
+    #print("Length of k predict: " + str(len(k_predict)))
+    #print("Length of testing y: " + str(len(testing_y)))
+
     k_confusion = eval.confusion_matrix(k_predict, testing_y)
     k_accuracy = eval.accuracy(k_confusion)
 
-    print("K Trees Accuracy:" + str(accuracy))
+    print("K Trees Accuracy:" + str(k_accuracy))

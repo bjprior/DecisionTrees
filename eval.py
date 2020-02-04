@@ -96,9 +96,10 @@ class Evaluator(object):
         truePostive = np.trace(confusion)
         allEvents = np.sum(confusion)
 
-        accuracy = truePostive / allEvents
-
-        return accuracy
+        if(truePostive == 0 or allEvents == 0):
+            return 0
+        else:
+            return truePostive / allEvents
         
     
     def precision(self, confusion):

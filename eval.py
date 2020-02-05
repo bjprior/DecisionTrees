@@ -18,10 +18,19 @@ import numpy as np
 class Evaluator(object):
     """ Class to perform evaluation
     """
-    
-    def confusion_matrix(self, prediction, annotation, class_labels=None):
+
+    @staticmethod
+    def getAccuracyOfDecisionTree(decisionTree, data):
+        predictions = decisionTree.predict(data[:, :-1])
+        # print(predictions)
+        confusionMatrix = Evaluator.confusion_matrix(predictions, data[:, -1])
+        print(confusionMatrix)
+        return Evaluator.accuracy(confusionMatrix)
+
+    @staticmethod
+    def confusion_matrix(prediction, annotation, class_labels=None):
         """ Computes the confusion matrix.
-        
+
         Parameters
         ----------
         prediction : np.array
@@ -34,7 +43,7 @@ class Evaluator(object):
             a C dimensional numpy array containing the ordered set of class
             labels. If not provided, defaults to all unique values in
             annotation.
-        
+
         Returns
         -------
         np.array
@@ -42,17 +51,16 @@ class Evaluator(object):
             Classes should be ordered by class_labels.
             Rows are ground truth per class, columns are predictions.
         """
-        
+
         if not class_labels:
             class_labels = np.unique(annotation)
-        
+
         confusion = np.zeros((len(class_labels), len(class_labels)), dtype=np.int)
-        
-        
+
         #######################################################################
         #                 ** TASK 3.1: COMPLETE THIS METHOD **
         #######################################################################
-                                                                                        #### NEEDS CHECKING FROM SOMEONE ELSE
+        #### NEEDS CHECKING FROM SOMEONE ELSE
         # iterate through rows and columns of the confusion matrix
         row = 0
         col = 0
@@ -62,7 +70,7 @@ class Evaluator(object):
                 counter = 0
                 for index in range(np.size(prediction)):
                     if (trueLetter == annotation[index] and predictedLetter == prediction[index]):
-                            counter += 1
+                        counter += 1
                     confusion[row][col] = counter
                 col += 1
                 col %= len(class_labels)
@@ -70,110 +78,110 @@ class Evaluator(object):
             row %= len(class_labels)
 
         return confusion
-    
-    
-    def accuracy(self, confusion):
+
+    @staticmethod
+    def accuracy(confusion):
         """ Computes the accuracy given a confusion matrix.
-        
+
         Parameters
         ----------
         confusion : np.array
             The confusion matrix (C by C, where C is the number of classes).
             Rows are ground truth per class, columns are predictions
-        
+
         Returns
         -------
         float
             The accuracy (between 0.0 to 1.0 inclusive)
         """
-        
+
         #######################################################################
         #                 ** TASK 3.2: COMPLETE THIS METHOD **
         #######################################################################
 
         # accuracy is given by instanceWhen(TRUTH == PREDICTED) / ALL EVENTS
-                                                                                        #### NEEDS CHECKING FROM SOMEONE ELSE
+        #### NEEDS CHECKING FROM SOMEONE ELSE
         truePostive = np.trace(confusion)
         allEvents = np.sum(confusion)
 
-        if(truePostive == 0 or allEvents == 0):
+        if (truePostive == 0 or allEvents == 0):
             return 0
         else:
             return truePostive / allEvents
-        
-    
-    def precision(self, confusion):
+
+    @staticmethod
+    def precision(confusion):
         """ Computes the precision score per class given a confusion matrix.
-        
+
         Also returns the macro-averaged precision across classes.
-        
+
         Parameters
         ----------
         confusion : np.array
             The confusion matrix (C by C, where C is the number of classes).
             Rows are ground truth per class, columns are predictions.
-        
+
         Returns
         -------
         np.array
             A C-dimensional numpy array, with the precision score for each
             class in the same order as given in the confusion matrix.
         float
-            The macro-averaged precision score across C classes.   
+            The macro-averaged precision score across C classes.
         """
-        
+
         # Initialise array to store precision for C classes
-        p = np.zeros((len(confusion), ))
-        
+        p = np.zeros((len(confusion),))
+
         #######################################################################
         #                 ** TASK 3.3: COMPLETE THIS METHOD **
         #######################################################################
-                                                                                            #### NEEDS CHECKING FROM SOMEONE ELSE
+        #### NEEDS CHECKING FROM SOMEONE ELSE
         # precision (per characteristic) == TRUTH / TOTAL PREDICTION THAT LETTER
-        index  = 0
+        index = 0
         for letterIndex in range(np.size(confusion[:, -1])):
-            if (np.sum(confusion[:,letterIndex]) == 0):
+            if (np.sum(confusion[:, letterIndex]) == 0):
                 p[index] = 0
             else:
-                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:,letterIndex])
+                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:, letterIndex])
             index += 1
 
-        # You will also need to change this        
+        # You will also need to change this
         macro_p = 0
         # finding average of the precision score for global
         macro_p = np.average(p)
 
         return (p, macro_p)
 
-    
-    def recall(self, confusion):
+    @staticmethod
+    def recall(confusion):
         """ Computes the recall score per class given a confusion matrix.
-        
+
         Also returns the macro-averaged recall across classes.
-        
+
         Parameters
         ----------
         confusion : np.array
             The confusion matrix (C by C, where C is the number of classes).
             Rows are ground truth per class, columns are predictions.
-        
+
         Returns
         -------
         np.array
             A C-dimensional numpy array, with the recall score for each
             class in the same order as given in the confusion matrix.
-        
+
         float
-            The macro-averaged recall score across C classes.   
+            The macro-averaged recall score across C classes.
         """
-        
+
         # Initialise array to store recall for C classes
-        r = np.zeros((len(confusion), ))
-        
+        r = np.zeros((len(confusion),))
+
         #######################################################################
         #                 ** TASK 3.4: COMPLETE THIS METHOD **
         #######################################################################
-                                                                                        #### NEEDS CHECKING FROM SOMEONE ELSE
+        #### NEEDS CHECKING FROM SOMEONE ELSE
         # recall (per characteristic) == TRUTH / TOTAL TIMES THAT WAS THE TRUE LETTER
         index = 0
         for letterIndex in range(np.size(confusion[:, -1])):
@@ -183,42 +191,41 @@ class Evaluator(object):
                 r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[letterIndex])
             index += 1
 
-        # You will also need to change this        
+        # You will also need to change this
         macro_r = 0
         # finding average of the recall score for global
         macro_r = np.average(r)
 
         return (r, macro_r)
-    
-    
+
     def f1_score(self, confusion):
         """ Computes the f1 score per class given a confusion matrix.
-        
+
         Also returns the macro-averaged f1-score across classes.
-        
+
         Parameters
         ----------
         confusion : np.array
             The confusion matrix (C by C, where C is the number of classes).
             Rows are ground truth per class, columns are predictions.
-        
+
         Returns
         -------
         np.array
             A C-dimensional numpy array, with the f1 score for each
             class in the same order as given in the confusion matrix.
-        
+
         float
-            The macro-averaged f1 score across C classes.   
+            The macro-averaged f1 score across C classes.
         """
-        
+
         # Initialise array to store recall for C classes
-        f = np.zeros((len(confusion), ))
-        
+        f = np.zeros((len(confusion),))
+
         #######################################################################
         #                 ** YOUR TASK: COMPLETE THIS METHOD **
         #######################################################################
-                                                                                            #### NEEDS CHECKING FROM SOMEONE ELSE
+        #### NEEDS CHECKING FROM SOMEONE ELSE
         precision, macro_p = self.precision(confusion)
         recall, macro_r = self.recall(confusion)
 
@@ -230,12 +237,10 @@ class Evaluator(object):
         # You will also need to change this
         macro_f = 0
 
-
         # finding average of the f1 for global
         macro_f = np.average(f)
 
         return (f, macro_f)
-   
 
 
 if __name__ == "__main__":

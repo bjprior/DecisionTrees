@@ -10,7 +10,7 @@
 import numpy as np
 import dataReader as dr
 import entropy as ent
-
+import eval
 
 class LeafNode(object):
     """
@@ -22,9 +22,13 @@ class LeafNode(object):
 
     """
 
-    def __init__(self, letter):
+    def __init__(self, letter, leafSize):
         self.letter = letter
-        #print("LeafNode: " + str(letter))
+        self.leafSize = leafSize
+        # print("LeafNode: " + str(letter))
+
+    def prune(self):
+        return False, self
 
 
 class Node(object):
@@ -47,7 +51,7 @@ class Node(object):
     """
 
     def __init__(self, split_col, threshold, leftData, rightData):
-        #print("Node: " + str(split_col) + " " + str(threshold))
+        # print("Node: " + str(split_col) + " " + str(threshold))
         self.split_col = split_col
         self.threshold = threshold
         self.left_node = Node.induceDecisionTree(leftData[:, :-1], leftData.T[-1])
@@ -61,29 +65,68 @@ class Node(object):
         classificationRepeats = len(np.unique(dataSet[:, -1]))
 
         if (len(dataSet) == 1) or (attributeRepeats == 1) or (classificationRepeats == 1):
-            return LeafNode(dataSet[0][-1])
+            return LeafNode(dataSet[0][-1], len(dataSet))
 
         split_col, threshold, leftChildData, rightChildData = ent.findBestNode(dataSet)
 
         return Node(split_col, threshold, leftChildData, rightChildData)
 
+    def prune(self, decTree, accuracy, validationData):
+        if isinstance(self.left_node, LeafNode) and isinstance(self.right_node, LeafNode):
+            return self.compact(), accuracy, True
+        elif isinstance(self.left_node, Node):
+            savedNode = self.left_node
+            self.left_node, accuracy, compacted = self.left_node.prune(decTree, accuracy, validationData)
+            newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData)
+            if compacted and newAccuracy < accuracy:
+                self.left_node = savedNode
+            else:
+                accuracy = newAccuracy
+        elif isinstance(self.right_node, Node):
+            savedNode = self.right_node
+            self.right_node, accuracy, compacted = self.right_node.prune(decTree, accuracy, validationData)
+            newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData)
+            if compacted and newAccuracy < accuracy:
+                self.right_node = savedNode
+            else:
+                accuracy = newAccuracy
+        print(accuracy)
+        return self, accuracy, False
+
+    @staticmethod
+    def pruneChildNode(childNode, decTree, accuracy):
+        savedNode = childNode
+        savedAccuracy = accuracy
+        accuracy, childNode = childNode.prune(decTree)
+        if accuracy < savedAccuracy:
+            childNode = savedNode
+            accuracy = savedAccuracy
+        return childNode, accuracy
+
+    def compact(self):
+        if self.left_node.leafSize > self.right_node.leafSize:
+            majorityLetter = self.left_node.letter
+        else:
+            majorityLetter = self.right_node.letter
+        return LeafNode(majorityLetter, (self.right_node.leafSize + self.left_node.leafSize))
+
 
 class DecisionTreeClassifier(object):
     """
     A decision tree classifier
-    
+
     Attributes
     ----------
     is_trained : bool
         Keeps track of whether the classifier has been trained
-    
+
     Methods
     -------
     train(X, y)
         Constructs a decision tree from data X and label y
     predict(X)
         Predicts the class label of samples X
-    
+
     """
 
     def __init__(self):
@@ -92,20 +135,20 @@ class DecisionTreeClassifier(object):
 
     def train(self, x, y):
         """ Constructs a decision tree classifier from data
-        
+
         Parameters
         ----------
         x : numpy.array
-            An N by K numpy array (N is the number of instances, K is the 
+            An N by K numpy array (N is the number of instances, K is the
             number of attributes)
         y : numpy.array
             An N-dimensional numpy array
-        
+
         Returns
         -------
         DecisionTreeClassifier
             A copy of the DecisionTreeClassifier instance
-        
+
         """
 
         # Make sure that x and y have the same number of instances
@@ -125,15 +168,15 @@ class DecisionTreeClassifier(object):
 
     def predict(self, attributeInstances):
         """ Predicts a set of samples using the trained DecisionTreeClassifier.
-        
+
         Assumes that the DecisionTreeClassifier has already been trained.
-        
+
         Parameters
         ----------
         x : numpy.array
-            An N by K numpy array (N is the number of samples, K is the 
+            An N by K numpy array (N is the number of samples, K is the
             number of attributes)
-        
+
         Returns
         -------
         numpy.array
@@ -159,7 +202,7 @@ class DecisionTreeClassifier(object):
         for attributeList in attributeInstances:
             predictions.append((DecisionTreeClassifier.predictInstance(self.rootNode, attributeList)))
 
-        #print(predictions)
+        # print(predictions)
         return np.asarray(predictions)
 
     @staticmethod
@@ -172,11 +215,17 @@ class DecisionTreeClassifier(object):
             else:
                 return DecisionTreeClassifier.predictInstance(node.right_node, attributeList)
 
+    def prune(self, validationFname):
+        validationData = dr.parseFile("data/validation.txt")
+        accuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData)
+        self.rootNode.prune(self, accuracy, validationData)
+
 
 if __name__ == "__main__":
     data = dr.parseFile("data/train_full.txt")
     x, y = data[:, :-1], data.T[-1]
-    #print(y)
+    # print(y)
     tree = DecisionTreeClassifier()
     tree.train(x, y)
     tree.predict(data)
+    tree.prune("data/validation.txt")

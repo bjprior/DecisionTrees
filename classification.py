@@ -12,6 +12,7 @@ import dataReader as dr
 import entropy as ent
 import matplotlib.pyplot as plt
 
+import eval
 
 class LeafNode(object):
     """
@@ -23,9 +24,9 @@ class LeafNode(object):
 
     """
 
-    def __init__(self, letter):
+    def __init__(self, letter, leafSize):
         self.letter = letter
-
+        self.leafSize = leafSize
         # print("LeafNode: " + str(letter))
 
     def __init__(self, letter, leaf_total, entropy):
@@ -38,6 +39,9 @@ class LeafNode(object):
 
     def NodeHeight(self):
         return 0
+
+    def prune(self):
+        return False, self
 
 
 class Node(object):
@@ -96,6 +100,45 @@ class Node(object):
         split_col, threshold, leftChildData, rightChildData = ent.findBestNode(dataSet)
 
         return Node(split_col, threshold, leftChildData, rightChildData, letters, entropy, node_total)
+
+    def prune(self, decTree, accuracy, validationData):
+        if isinstance(self.left_node, LeafNode) and isinstance(self.right_node, LeafNode):
+            return self.compact(), accuracy, True
+        elif isinstance(self.left_node, Node):
+            savedNode = self.left_node
+            self.left_node, accuracy, compacted = self.left_node.prune(decTree, accuracy, validationData)
+            newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData)
+            if compacted and newAccuracy < accuracy:
+                self.left_node = savedNode
+            else:
+                accuracy = newAccuracy
+        elif isinstance(self.right_node, Node):
+            savedNode = self.right_node
+            self.right_node, accuracy, compacted = self.right_node.prune(decTree, accuracy, validationData)
+            newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData)
+            if compacted and newAccuracy < accuracy:
+                self.right_node = savedNode
+            else:
+                accuracy = newAccuracy
+        print(accuracy)
+        return self, accuracy, False
+
+    @staticmethod
+    def pruneChildNode(childNode, decTree, accuracy):
+        savedNode = childNode
+        savedAccuracy = accuracy
+        accuracy, childNode = childNode.prune(decTree)
+        if accuracy < savedAccuracy:
+            childNode = savedNode
+            accuracy = savedAccuracy
+        return childNode, accuracy
+
+    def compact(self):
+        if self.left_node.leafSize > self.right_node.leafSize:
+            majorityLetter = self.left_node.letter
+        else:
+            majorityLetter = self.right_node.letter
+        return LeafNode(majorityLetter, (self.right_node.leafSize + self.left_node.leafSize))
 
 
 class DecisionTreeClassifier(object):
@@ -202,6 +245,11 @@ class DecisionTreeClassifier(object):
             else:
                 return DecisionTreeClassifier.predictInstance(node.right_node, attributeList)
 
+    def prune(self, validationFname):
+        validationData = dr.parseFile("data/validation.txt")
+        accuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData)
+        self.rootNode.prune(self, accuracy, validationData)
+
     def plot_tree(self):
         if not self.is_trained:
             raise Exception("Decision Tree classifier has not yet been trained.")
@@ -264,4 +312,5 @@ if __name__ == "__main__":
     tree = DecisionTreeClassifier()
     tree.train(x, y)
     tree.predict(data)
+    tree.prune("data/validation.txt")
     tree.plot_tree()

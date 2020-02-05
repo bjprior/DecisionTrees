@@ -6,8 +6,9 @@ def findBestNode(dataSet):
     maxInfoGain = 0
     splitAttribute = -1
     splitAttributeValue = -1
-    parentEntropy = calcEntropy(dataSet[-1])
-    bestBoundary = -1
+    parentEntropy = calcEntropy(dataSet[:, -1])
+    child1 = []
+    child2 = []
 
     for attribute in range(dataSet.shape[1] - 1):  # Final column is classification so not iterated over
         # Get array of attribute against classification sorted w.r.t attributeValue
@@ -34,7 +35,6 @@ def findBestNode(dataSet):
                 splitAttributeValue = attributeValue
                 child1 = attributeData[:boundary]
                 child2 = attributeData[boundary:]
-
     return splitAttribute, splitAttributeValue, child1, child2
 
 
@@ -47,5 +47,5 @@ def calcEntropy(dataSet):
 
 
 if __name__ == "__main__":
-    dataSet = dataReader.parseFile("data/toy.txt")
-    print(findBestNode(dataSet)[1])
+    dataSet = dataReader.parseFile("data/train_full.txt")
+    findBestNode(dataSet)

@@ -29,7 +29,7 @@ class LeafNode(object):
         self.leafSize = leafSize
         # print("LeafNode: " + str(letter))
 
-    def __init__(self, letter, leaf_total, entropy):
+    def __init__(self, letter, leaf_total, entropy=0):
         self.letter = letter
         self.leaf_total = leaf_total
         self.entropy = entropy
@@ -103,24 +103,26 @@ class Node(object):
 
     def prune(self, decTree, accuracy, validationData):
         if isinstance(self.left_node, LeafNode) and isinstance(self.right_node, LeafNode):
+            #print("leaf")
             return self.compact(), accuracy, True
-        elif isinstance(self.left_node, Node):
+        if isinstance(self.left_node, Node):
             savedNode = self.left_node
             self.left_node, accuracy, compacted = self.left_node.prune(decTree, accuracy, validationData)
             newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData)
+            #print(newAccuracy, accuracy)
             if compacted and newAccuracy < accuracy:
                 self.left_node = savedNode
             else:
                 accuracy = newAccuracy
-        elif isinstance(self.right_node, Node):
+        if isinstance(self.right_node, Node):
             savedNode = self.right_node
             self.right_node, accuracy, compacted = self.right_node.prune(decTree, accuracy, validationData)
             newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData)
+            #print(newAccuracy, accuracy)
             if compacted and newAccuracy < accuracy:
                 self.right_node = savedNode
             else:
                 accuracy = newAccuracy
-        print(accuracy)
         return self, accuracy, False
 
     @staticmethod
@@ -134,11 +136,11 @@ class Node(object):
         return childNode, accuracy
 
     def compact(self):
-        if self.left_node.leafSize > self.right_node.leafSize:
+        if self.left_node.leaf_total > self.right_node.leaf_total:
             majorityLetter = self.left_node.letter
         else:
             majorityLetter = self.right_node.letter
-        return LeafNode(majorityLetter, (self.right_node.leafSize + self.left_node.leafSize))
+        return LeafNode(majorityLetter, (self.right_node.leaf_total + self.left_node.leaf_total))
 
 
 class DecisionTreeClassifier(object):
@@ -232,7 +234,6 @@ class DecisionTreeClassifier(object):
         for attributeList in attributeInstances:
             predictions.append((DecisionTreeClassifier.predictInstance(self.rootNode, attributeList)))
 
-        # print(predictions)
         return np.asarray(predictions)
 
     @staticmethod
@@ -246,9 +247,14 @@ class DecisionTreeClassifier(object):
                 return DecisionTreeClassifier.predictInstance(node.right_node, attributeList)
 
     def prune(self, validationFname):
-        validationData = dr.parseFile("data/validation.txt")
-        accuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData)
-        self.rootNode.prune(self, accuracy, validationData)
+        validationData = dr.parseFile(validationFname)
+        accuracy = 0
+        prunedAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData)
+        while prunedAccuracy > accuracy:
+            accuracy = prunedAccuracy
+            print(accuracy)
+            self.rootNode.prune(self, accuracy, validationData)
+            prunedAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData)
 
     def plot_tree(self):
         if not self.is_trained:
@@ -260,6 +266,8 @@ class DecisionTreeClassifier(object):
         # midpoint of the window to plot root
         midx = (x1 + x2) / 2
         plt.axis('off')
+
+        plt.figure(figsize=(30, 20))
         # plot root node as a rectangle
         # ha= horizonatal alignment, va= vertical alignment
         # text is plotted using coordinates midx (middle of width of screen) and y2 (top of screen)
@@ -272,6 +280,7 @@ class DecisionTreeClassifier(object):
         steps = 0
         DecisionTreeClassifier.plot_tree_helper(midx, self.rootNode.left_node, x1, midx, y - 5, steps)
         DecisionTreeClassifier.plot_tree_helper(midx, self.rootNode.right_node, midx, x2, y - 5, steps)
+        plt.savefig("tree.png")
         plt.show()
 
     @staticmethod
@@ -291,8 +300,8 @@ class DecisionTreeClassifier(object):
             plt.plot([parentx, midx], [y + 5, y], 'brown', linestyle=':', marker='')
             # if not a leaf node, call this function recursively
             # stop recursion after four rows to ensure tree is correct size for report
-            if (steps == 3):
-                return
+            # if (steps == 3):
+            #     return
             left_height = node.left_node.NodeHeight() + 1
             right_height = node.right_node.NodeHeight() + 1
             # update the weight value
@@ -306,11 +315,15 @@ class DecisionTreeClassifier(object):
 
 
 if __name__ == "__main__":
-    data = dr.parseFile("data/train_full.txt")
+    data = dr.parseFile("data/simple1.txt")
     x, y = data[:, :-1], data.T[-1]
-    # print(y)
+
     tree = DecisionTreeClassifier()
     tree.train(x, y)
-    tree.predict(data)
-    tree.prune("data/validation.txt")
+    #tree.predict(data)
     tree.plot_tree()
+
+    #print("----------------PRUNE------------------------")
+    #tree.prune("data/validation.txt")
+    # tree.plot_tree()
+    print(eval.Evaluator.getAccuracyOfDecisionTree(tree, dr.parseFile("data/simple1.txt")))

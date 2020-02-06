@@ -246,8 +246,16 @@ class Evaluator(object):
 
 
 if __name__ == "__main__":
-    # truth = np.array(["A", "B", "C", "A", "B"])
-    # predictions = np.array(["A", "C", "B", "D", "B"])
+    data = dr.parseFile("data/train_full.txt")
+    print("RESULTS FOR TRAIN_FULL.TXT:")
+    x, y = data[:, :-1], data.T[-1]
+    tree = cp.DecisionTreeClassifier()
+    tree.train(x, y)
+    test = dr.parseFile("data/test.txt")
+    xtruth, ytruth = test[:, :-1], test.T[-1]
+    predictions = tree.predict(test)
+    e = Evaluator()
+    a = e.confusion_matrix(ytruth, predictions)
     print("Order of matrix is ACEGOQ")
     print("confusion" + "\n" + str(a))
     print("accuracy: " + str(e.accuracy(a)))
@@ -286,7 +294,3 @@ if __name__ == "__main__":
     print("Recall: " + str(e.recall(a)))
     print("Precision: " + str(e.precision(a)))
     print("F1score: " + str(e.f1_score(a)))
-    e = Evaluator()
-    a = e.confusion_matrix(truth, predictions)
-
-    print(e.f1_score(a))

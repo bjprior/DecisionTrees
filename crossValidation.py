@@ -13,18 +13,19 @@ def k_fold_cross_validation(data_set, k):
 
     for i in range(1, k + 1):
         testing, training = split_set(data_set, k, i)
-        training_x, training_y = training[:, :-1], training.T[-1]
+        training_x = training[:, :-1]
+        training_y = [chr(i) for i in training.T[-1]]
         tree.train(training_x, training_y)
         predictions = tree.predict(testing)
         eval = ev.Evaluator()
-        testing_y = testing.T[-1]
-        # print("Prediction(" + str(i) + "): " + str(predictions))
-        # print("Label(" + str(i) + ")" + str(testing_y))
+        testing_y = [chr(i) for i in testing.T[-1]]
+        print("Prediction(" + str(i) + "): " + str(predictions))
+        print("Label(" + str(i) + ")" + str(testing_y))
         confusion = eval.confusion_matrix(predictions, testing_y)
         accuracy[i - 1] = eval.accuracy(confusion)
         if accuracy[i - 1] > max_accuracy:
             best_tree = tree
-        # print("Accuracy(" + str(i) + "):" + str(accuracy[i - 1]))
+        print("Accuracy(" + str(i) + "):" + str(accuracy[i - 1]))
 
     return accuracy, best_tree
 
@@ -36,7 +37,8 @@ def k_decision_trees(training, testing, k):
     for i in range(1, k + 1):
         trees.append(cls.DecisionTreeClassifier())
         testing_new, training_new = split_set(training, k, i)
-        training_x, training_y = training_new[:, :-1], training_new.T[-1]
+        training_x = training_new[:, :-1]
+        training_y = [chr(i) for i in training_new.T[-1]]
         trees[i - 1].train(training_x, training_y)
         predictions.append(trees[i - 1].predict(testing))
 
@@ -107,7 +109,9 @@ if __name__ == "__main__":
     # Data Imports
     full_data = dr.parseFile("data/train_full.txt")
     test_data = dr.parseFile("data/test.txt")
-
+    full_data = dr.mergeAttributesAndCharacteristics(full_data[0], full_data[1])
+    print(full_data)
+    test_data = dr.mergeAttributesAndCharacteristics(test_data[0], test_data[1])
     k = 10
     n = len(full_data) / k
     accuracy, cross_tree = k_fold_cross_validation(full_data, k)
@@ -119,10 +123,11 @@ if __name__ == "__main__":
         print(str(round(accuracy[i], 4)) + " ± " + str(round(std_dev[i], 4)))
 
     # Question 3.4
-    x, y = full_data[:, :-1], full_data.T[-1]
+    x = full_data[:, :-1]
+    y = [chr(i) for i in full_data.T[-1]]
     Full_trained = cls.DecisionTreeClassifier()
     Full_trained.train(x, y)
-    testing_y = test_data.T[-1]
+    testing_y =[chr(i) for i in test_data.T[-1]]
     full_predict = Full_trained.predict(test_data)
     cross_predict = cross_tree.predict(test_data)
 

@@ -6,19 +6,20 @@ import matplotlib.pyplot as plt
 # Returns a multi-dim array of dimensions numRows x numFeatures+1
 # with the final column being the classification
 # https://stackoverflow.com/questions/19056125/reading-a-file-into-a-multidimensional-array-with-python
-def parseFile(fname, charateristicsAsInts=False):
-    data = []
+def parseFile(fname):
+    attributes = []
+    characteristics = []
     with open(fname) as file:
         for line in file:
             # New line character needs to be removed
             line = line.strip()
-            row = [int(attribute) for attribute in line[:-2].split(",")]
-            if charateristicsAsInts:
-                row.append(ord(line[-1]))
-            else:
-                row.append(line[-1])
-            data.append(row)
-    return np.array(data)
+            attributes.append([int(attribute) for attribute in line[:-2].split(",")])
+            characteristics.append(line[-1])
+    return np.array(attributes), characteristics
+
+
+def mergeAttributesAndCharacteristics(attributes, characteristics):
+    return np.c_[attributes, [ord(i) for i in characteristics]]
 
 
 def attributesToScatterData(data):
@@ -103,14 +104,17 @@ def percentageChange(dataSet1, dataSet2):
 
 if __name__ == "__main__":
     # Read in data
-    fullData = parseFile("data/train_full.txt", True)
+    fullData = parseFile("data/train_full.txt")
+    fullData = mergeAttributesAndCharacteristics(fullData[0], fullData[1])
     fullDataScatter = attributesToScatterData(fullData)
     fullDataClassPercent = getClassFreq(fullData);
 
-    subData = parseFile("data/train_sub.txt", True)
+    subData = parseFile("data/train_sub.txt")
+    subData = mergeAttributesAndCharacteristics(subData[0], subData[1])
     subDataClassPercent = getClassFreq(subData);
 
-    noisyData = parseFile("data/train_noisy.txt", True)
+    noisyData = parseFile("data/train_noisy.txt")
+    noisyData = mergeAttributesAndCharacteristics(noisyData[0], noisyData[1])
     noisyDataClassPercent = getClassFreq(noisyData);
 
     # Plot relevant graphs

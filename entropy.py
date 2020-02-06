@@ -7,13 +7,11 @@ def findBestNode(dataSet):
     splitAttribute = -1
     splitAttributeValue = -1
     parentEntropy = calcEntropy(dataSet[:, -1])
-    child1 = []
-    child2 = []
 
     for attribute in range(dataSet.shape[1] - 1):  # Final column is classification so not iterated over
-        # Get array of attribute against classification sorted w.r.t attributeValue
-        attributeData = dataSet[dataSet[:, attribute].argsort()]
 
+        # Get array of attribute against classification sorted w.r.t attributeValue
+        dataSet = np.array(sorted(dataSet, key=lambda a_entry: int(a_entry[attribute])))
         attributeValues = np.unique(dataSet[:, attribute])
         # If only 1 attribute value then cannot split over this attribute
         if len(attributeValues) == 1:
@@ -21,11 +19,11 @@ def findBestNode(dataSet):
 
         for attributeValue in attributeValues[:-1]:  # Final attribute value not included as cannot split over it
             # Plus one as slicing inclusive of lower bound and exclusive of upper bound
-            boundary = np.where(attributeData[:, attribute] == attributeValue)[0][-1] + 1
+            boundary = np.where(dataSet[:, attribute] == attributeValue)[0][-1] + 1
 
             # Calc entropy of potential child dataSets adjusting for size of child sets
-            entropyChild1 = (boundary / len(dataSet)) * calcEntropy(attributeData[:boundary, -1])
-            entropyChild2 = (len(dataSet) - boundary) / len(dataSet) * calcEntropy(attributeData[boundary:, -1])
+            entropyChild1 = (boundary / len(dataSet)) * calcEntropy(dataSet[:boundary, -1])
+            entropyChild2 = (len(dataSet) - boundary) / len(dataSet) * calcEntropy(dataSet[boundary:, -1])
 
             infoGain = parentEntropy - entropyChild1 - entropyChild2
             # print(parentEntropy, entropyChild1, entropyChild2, infoGain)
@@ -33,8 +31,8 @@ def findBestNode(dataSet):
                 maxInfoGain = infoGain
                 splitAttribute = attribute
                 splitAttributeValue = attributeValue
-                child1 = attributeData[:boundary]
-                child2 = attributeData[boundary:]
+                child1 = dataSet[:boundary]
+                child2 = dataSet[boundary:]
     return splitAttribute, splitAttributeValue, child1, child2
 
 

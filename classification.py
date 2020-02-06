@@ -35,7 +35,7 @@ class LeafNode(object):
         self.entropy = entropy
 
     def __str__(self):
-        return self.letter + "\n" + "Tot:" + str(self.leaf_total) + "\n" + "S:" + str(round(self.entropy, 2))
+        return chr(self.letter) + "\n" + "Tot:" + str(self.leaf_total) + "\n" + "S:" + str(round(self.entropy, 2))
 
     def NodeHeight(self):
         return 0
@@ -67,33 +67,31 @@ class Node(object):
         # print("Node: " + str(split_col) + " " + str(threshold))
         self.split_col = split_col
         self.threshold = threshold
-        self.left_node = Node.induceDecisionTree(leftData[:, :-1], leftData.T[-1])
-        self.right_node = Node.induceDecisionTree(rightData[:, :-1], rightData.T[-1])
+        self.left_node = Node.induceDecisionTree(leftData)
+        self.right_node = Node.induceDecisionTree(rightData)
         self.letters = letters
         self.entropy = entropy
         self.node_total = node_total
 
     def __str__(self):
-        return "x" + str(self.split_col) + "<=" + str(self.threshold) + "\n" + "Tot:" + str(
+        return "x" + str(self.split_col) + "<" + str(self.threshold) + "\n" + "Tot:" + str(
             self.node_total) + "\n" + "E:" + str(round(self.entropy, 2)) + "\n" + str(self.letters) + "\n"
 
     def NodeHeight(self):
         return 1 + max(self.left_node.NodeHeight(), self.right_node.NodeHeight())
 
     @staticmethod
-    def induceDecisionTree(attributes, classification):
-        dataSet = np.array(np.c_[attributes, classification])
-
+    def induceDecisionTree(dataSet):
         attributeRepeats = len(np.unique(dataSet[:, :-1], axis=0))
         classificationRepeats = len(np.unique(dataSet[:, -1]))
         node_total = len(dataSet)
-        entropy = ent.calcEntropy(classification)
+        entropy = ent.calcEntropy(dataSet[:, -1])
 
         if (len(dataSet) == 1) or (attributeRepeats == 1) or (classificationRepeats == 1):
             return LeafNode(dataSet[0][-1], node_total, entropy)
 
         node_total = len(dataSet)
-        (unique, counts) = np.unique(classification, return_counts=True)
+        (unique, counts) = np.unique(dataSet[:, -1], return_counts=True)
         frequencies = np.asarray((unique, counts)).T
         letters = frequencies
 
@@ -103,13 +101,13 @@ class Node(object):
 
     def prune(self, decTree, accuracy, validationData):
         if isinstance(self.left_node, LeafNode) and isinstance(self.right_node, LeafNode):
-            #print("leaf")
+            # print("leaf")
             return self.compact(), accuracy, True
         if isinstance(self.left_node, Node):
             savedNode = self.left_node
             self.left_node, accuracy, compacted = self.left_node.prune(decTree, accuracy, validationData)
-            newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData)
-            #print(newAccuracy, accuracy)
+            newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData[0], validationData[1])
+            # print(newAccuracy, accuracy)
             if compacted and newAccuracy < accuracy:
                 self.left_node = savedNode
             else:
@@ -117,9 +115,9 @@ class Node(object):
         if isinstance(self.right_node, Node):
             savedNode = self.right_node
             self.right_node, accuracy, compacted = self.right_node.prune(decTree, accuracy, validationData)
-            newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData)
-            #print(newAccuracy, accuracy)
-            if compacted and newAccuracy < accuracy:
+            newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData[0], validationData[1])
+            # print(newAccuracy, accuracy)
+            if compacted and newAccuracy <= accuracy:
                 self.right_node = savedNode
             else:
                 accuracy = newAccuracy
@@ -190,8 +188,7 @@ class DecisionTreeClassifier(object):
         #######################################################################
         #                 ** TASK 2.1: COMPLETE THIS METHOD **
         #######################################################################
-
-        self.rootNode = Node.induceDecisionTree(x, y)
+        self.rootNode = Node.induceDecisionTree(dr.mergeAttributesAndCharacteristics(x, y))
 
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
@@ -239,7 +236,7 @@ class DecisionTreeClassifier(object):
     @staticmethod
     def predictInstance(node, attributeList):
         if isinstance(node, LeafNode):
-            return node.letter
+            return chr(node.letter)
         else:
             if int(attributeList[node.split_col]) <= int(node.threshold):
                 return DecisionTreeClassifier.predictInstance(node.left_node, attributeList)
@@ -249,12 +246,12 @@ class DecisionTreeClassifier(object):
     def prune(self, validationFname):
         validationData = dr.parseFile(validationFname)
         accuracy = 0
-        prunedAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData)
+        prunedAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData[0], validationData[1])
         while prunedAccuracy > accuracy:
             accuracy = prunedAccuracy
             print(accuracy)
             self.rootNode.prune(self, accuracy, validationData)
-            prunedAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData)
+            prunedAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData[0], validationData[1])
 
     def plot_tree(self):
         if not self.is_trained:
@@ -315,15 +312,20 @@ class DecisionTreeClassifier(object):
 
 
 if __name__ == "__main__":
-    data = dr.parseFile("data/simple1.txt")
-    x, y = data[:, :-1], data.T[-1]
+    trainingData = dr.parseFile("data/train_full.txt")
+    validationData = dr.parseFile("data/validation.txt")
+    testData = dr.parseFile("data/test.txt")
 
     tree = DecisionTreeClassifier()
-    tree.train(x, y)
-    #tree.predict(data)
+    tree.train(trainingData[0], trainingData[1])
+    # tree.predict(data)
     tree.plot_tree()
+    print(eval.Evaluator.getAccuracyOfDecisionTree(tree, testData[0], testData[1]))
 
-    #print("----------------PRUNE------------------------")
-    #tree.prune("data/validation.txt")
-    # tree.plot_tree()
-    print(eval.Evaluator.getAccuracyOfDecisionTree(tree, dr.parseFile("data/simple1.txt")))
+    print("----------------PRUNE------------------------")
+    tree.prune("data/validation.txt")
+    tree.plot_tree()
+    print("----------------Test------------------------")
+    print(eval.Evaluator.getAccuracyOfDecisionTree(tree, testData[0], testData[1]))
+
+

@@ -20,11 +20,13 @@ class Evaluator(object):
     """
 
     @staticmethod
-    def getAccuracyOfDecisionTree(decisionTree, data):
-        predictions = decisionTree.predict(data[:, :-1])
+    def getAccuracyOfDecisionTree(decisionTree, attributes, groundTruths):
+        predictions = decisionTree.predict(attributes)
         # print(predictions)
-        confusionMatrix = Evaluator.confusion_matrix(predictions, data[:, -1])
-        print(confusionMatrix)
+        # print(attributes)
+        # print(predictions)
+        confusionMatrix = Evaluator.confusion_matrix(predictions, groundTruths)
+        #print(confusionMatrix)
         return Evaluator.accuracy(confusionMatrix)
 
     @staticmethod

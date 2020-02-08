@@ -92,8 +92,12 @@ class Node(object):
 
         node_total = len(dataSet)
         (unique, counts) = np.unique(dataSet[:, -1], return_counts=True)
-        frequencies = np.asarray((unique, counts)).T
-        letters = frequencies
+
+        characters = list()
+        for i in range(len(unique)):
+            characters.append(chr(unique[i]))
+        np.asarray(characters)
+        letters = np.asarray((characters, counts)).T
 
         split_col, threshold, leftChildData, rightChildData = ent.findBestNode(dataSet)
 
@@ -246,24 +250,20 @@ class DecisionTreeClassifier(object):
     def plot_tree(self):
         if not self.is_trained:
             raise Exception("Decision Tree classifier has not yet been trained.")
-        # set arbitrary window size, width (x1 to x2) and height (y1 to y2)
+        # set window size
         x1 = 0
         x2 = 1000
         y = 100
         # midpoint of the window to plot root
         midx = (x1 + x2) / 2
         plt.axis('off')
-
         plt.figure(figsize=(30, 20))
         # plot root node as a rectangle
         # ha= horizonatal alignment, va= vertical alignment
-        # text is plotted using coordinates midx (middle of width of screen) and y2 (top of screen)
         plt.text(midx, y, str(self.rootNode), size=7, color='green',
                  ha="center", va="center",
                  bbox=dict(boxstyle="round,pad=0.2", facecolor='white', edgecolor='green'))
         # call helper functions on left and right node to plot the children
-        # in the subwindows divided by midpoint
-        # define the vertical distance between node and its children
         steps = 0
         DecisionTreeClassifier.plot_tree_helper(midx, self.rootNode.left_node, x1, midx, y - 5, steps)
         DecisionTreeClassifier.plot_tree_helper(midx, self.rootNode.right_node, midx, x2, y - 5, steps)
@@ -285,8 +285,7 @@ class DecisionTreeClassifier(object):
                      bbox=dict(facecolor='white', edgecolor='green'))
             # Line to parent, adjusting the number '5' with line length required
             plt.plot([parentx, midx], [y + 5, y], 'brown', linestyle=':', marker='')
-            # if not a leaf node, call this function recursively
-            # stop recursion after four rows to ensure tree is correct size for report
+            # change depth of tree shown
             # if (steps == 3):
             #     return
             left_height = node.left_node.NodeHeight() + 1
@@ -309,7 +308,7 @@ if __name__ == "__main__":
     tree = DecisionTreeClassifier()
     tree.train(trainingData[0], trainingData[1])
     # tree.predict(data)
-    #tree.plot_tree()
+    tree.plot_tree()
     print(eval.Evaluator.getAccuracyOfDecisionTree(tree, testData[0], testData[1]))
 
     print("----------------PRUNE------------------------")

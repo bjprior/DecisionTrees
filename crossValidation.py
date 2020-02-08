@@ -4,7 +4,6 @@ import classification as cls
 import eval as ev
 from scipy import stats
 
-
 def k_fold_cross_validation(data_set, k):
     accuracy = np.zeros(k)
     tree = cls.DecisionTreeClassifier()
@@ -75,7 +74,6 @@ def split_set(data_set, k, fold):
         return testing_set, training_set
 
 
-# Answer for
 def standard_dev(accuracy, k, n):
     errors = np.ones(k) - accuracy
     std_dev = np.sqrt((errors * accuracy) / n)

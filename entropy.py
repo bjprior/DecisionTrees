@@ -1,7 +1,8 @@
 import numpy as np
 import dataReader
 
-
+# Reads in a dataset of attributes and classifications
+# Returns the best attribute and its value to split on as well as the corresponding separated datasets
 def findBestNode(dataSet):
     maxInfoGain = 0
     splitAttribute = -1
@@ -26,7 +27,8 @@ def findBestNode(dataSet):
             entropyChild2 = (len(dataSet) - boundary) / len(dataSet) * calcEntropy(dataSet[boundary:, -1])
 
             infoGain = parentEntropy - entropyChild1 - entropyChild2
-            # print(parentEntropy, entropyChild1, entropyChild2, infoGain)
+
+            # Only updata if the infoGain is greater than our current maxInfoGain
             if infoGain > maxInfoGain:
                 maxInfoGain = infoGain
                 splitAttribute = attribute
@@ -35,7 +37,8 @@ def findBestNode(dataSet):
                 child2 = dataSet[boundary:]
     return splitAttribute, splitAttributeValue, child1, child2
 
-
+# Reads in a dataset of attributes and classifications
+# Returns the entropy of the dataset
 def calcEntropy(dataSet):
     # Calc entropy of a data set by getting count of each value converting this to a probability
     # and then converting this to an entropy

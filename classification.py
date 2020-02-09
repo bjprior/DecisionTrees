@@ -277,52 +277,49 @@ class DecisionTreeClassifier(object):
         x1 = 0
         x2 = 1000
         y = 100
-
-        midx = (x1 + x2) / 2
+        middleWidth = 0.5*(x1 + x2)
         plt.figure(figsize=(30, 20))
         plt.axis('off')
         # plot root node as a rectangle
-        # ha= horizonatal alignment, va= vertical alignment
-        plt.text(midx, y, str(self.rootNode), size=7, color='green',
-                 ha="center", va="center",
+        plt.text(middleWidth, y, str(self.rootNode), size=7, color='green',
+                 horizontalalignment="center", verticalalignment="center",
                  bbox=dict(boxstyle="round,pad=0.2", facecolor='white', edgecolor='green'))
         # call helper functions on left and right node to plot the children
         steps = 0
-        DecisionTreeClassifier.plot_tree_helper(midx, self.rootNode.left_node, x1, midx, y - 5, steps)
-        DecisionTreeClassifier.plot_tree_helper(midx, self.rootNode.right_node, midx, x2, y - 5, steps)
+        DecisionTreeClassifier.plot_tree_helper(self.rootNode.left_node, x1, middleWidth, y - 5, steps, middleWidth)
+        DecisionTreeClassifier.plot_tree_helper(self.rootNode.right_node, middleWidth, x2, y - 5, steps, middleWidth)
         plt.savefig("tree.png")
-        plt.show(aspect="auto")
+        #plt.show(aspect="auto")
 
     @staticmethod
-    def plot_tree_helper(parentx, node, x1, x2, y, steps):
+    def plot_tree_helper(node, x1, x2, y, steps, parent_xval):
         """Helper function to plot a visual rep of the decision tree"""
         # calculate mid point of the sub window
-        midx = (x1 + x2) / 2
+        middleWidth = 0.5*(x1 + x2)
         # if node is a leaf, plot as a filled in box, else plot with a white background
         if isinstance(node, LeafNode):
-            plt.text(midx, y, str(node), size=7, color='white', ha="center", va="center",
-                     bbox=dict(facecolor='green', edgecolor='white'))
-            plt.plot([parentx, midx], [y + 5, y], 'brown', linestyle=':', marker='')
+            plt.text(middleWidth, y, str(node), size=7, color='white', horizontalalignment="center",
+                     verticalalignment="center",
+                     bbox=dict(boxstyle="round,pad=0.2", facecolor='green', edgecolor='white'))
+            plt.plot([parent_xval, middleWidth], [y + 5, y], 'brown', linestyle=':', marker='')
             return
         else:
-            plt.text(midx, y, str(node), size=7, color='green', ha="center", va="center",
-                     bbox=dict(facecolor='white', edgecolor='green'))
+            plt.text(middleWidth, y, str(node), size=7, color='green', horizontalalignment="center",
+                     verticalalignment="center",
+                     bbox=dict(boxstyle="round,pad=0.2", facecolor='white', edgecolor='green'))
             # Line to parent, adjusting the number '5' with line length required
-            plt.plot([parentx, midx], [y + 5, y], 'brown', linestyle=':', marker='')
+            plt.plot([parent_xval, middleWidth], [y + 5, y], 'brown', linestyle=':', marker='')
             # change depth of tree shown
             # if steps == 3:
-            #     return
-            left_height = node.left_node.NodeHeight() + 1
-            right_height = node.right_node.NodeHeight() + 1
-            # update the weight value
-            weight = left_height / (left_height + right_height)
-            # allocates a larger space for child with largest height
-            div_x = x1 + weight * (x2 - x1)
-            DecisionTreeClassifier.plot_tree_helper(midx, node.left_node,
-                                                    x1, div_x, y - 5, steps + 1)
-            DecisionTreeClassifier.plot_tree_helper(midx, node.right_node,
-                                                    div_x, x2, y - 5, steps + 1)
-
+            #  return
+            left_height = node.left_node.NodeHeight()
+            right_height = node.right_node.NodeHeight()
+            # update the weight value to allocate a larger space for child with largest height
+            weightedx = x1 + ((left_height + 1) / (left_height + right_height + 2)) * (x2 - x1)
+            DecisionTreeClassifier.plot_tree_helper(node.left_node,
+                                                    x1, weightedx, y - 5, steps + 1, middleWidth)
+            DecisionTreeClassifier.plot_tree_helper(node.right_node,
+                                                    weightedx, x2, y - 5, steps + 1, middleWidth)
 
 if __name__ == "__main__":
     """Mock training programme"""

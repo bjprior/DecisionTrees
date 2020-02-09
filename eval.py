@@ -24,11 +24,7 @@ class Evaluator(object):
     @staticmethod
     def getAccuracyOfDecisionTree(decisionTree, attributes, groundTruths):
         predictions = decisionTree.predict(attributes)
-        # print(predictions)
-        # print(attributes)
-        # print(predictions)
         confusionMatrix = Evaluator.confusion_matrix(predictions, groundTruths)
-        #print(confusionMatrix)
         return Evaluator.accuracy(confusionMatrix)
 
     @staticmethod
@@ -64,7 +60,6 @@ class Evaluator(object):
         #######################################################################
         #                 ** TASK 3.1: COMPLETE THIS METHOD **
         #######################################################################
-        #### NEEDS CHECKING FROM SOMEONE ELSE
         # iterate through rows and columns of the confusion matrix
         row = 0
         col = 0
@@ -73,7 +68,7 @@ class Evaluator(object):
             for predictedLetter in class_labels:
                 counter = 0
                 for index in range(np.size(prediction)):
-                    if (trueLetter == annotation[index] and predictedLetter == prediction[index]):
+                    if trueLetter == annotation[index] and predictedLetter == prediction[index]:
                         counter += 1
                     confusion[row][col] = counter
                 col += 1
@@ -104,11 +99,10 @@ class Evaluator(object):
         #######################################################################
 
         # accuracy is given by instanceWhen(TRUTH == PREDICTED) / ALL EVENTS
-        #### NEEDS CHECKING FROM SOMEONE ELSE
         truePostive = np.trace(confusion)
         allEvents = np.sum(confusion)
-
-        if (truePostive == 0 or allEvents == 0):
+        # divide by 0 check
+        if truePostive == 0 or allEvents == 0:
             return 0
         else:
             return truePostive / allEvents
@@ -140,22 +134,18 @@ class Evaluator(object):
         #######################################################################
         #                 ** TASK 3.3: COMPLETE THIS METHOD **
         #######################################################################
-        #### NEEDS CHECKING FROM SOMEONE ELSE
         # precision (per characteristic) == TRUTH / TOTAL PREDICTION THAT LETTER
         index = 0
         for letterIndex in range(np.size(confusion[:, -1])):
-            if (np.sum(confusion[:, letterIndex]) == 0):
+            if np.sum(confusion[:, letterIndex]) == 0:
                 p[index] = 0
             else:
                 p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:, letterIndex])
             index += 1
-
-        # You will also need to change this
-        macro_p = 0
         # finding average of the precision score for global
         macro_p = np.average(p)
 
-        return (p, macro_p)
+        return p, macro_p
 
     @staticmethod
     def recall(confusion):
@@ -185,22 +175,19 @@ class Evaluator(object):
         #######################################################################
         #                 ** TASK 3.4: COMPLETE THIS METHOD **
         #######################################################################
-        #### NEEDS CHECKING FROM SOMEONE ELSE
         # recall (per characteristic) == TRUTH / TOTAL TIMES THAT WAS THE TRUE LETTER
         index = 0
         for letterIndex in range(np.size(confusion[:, -1])):
-            if (np.sum(confusion[letterIndex]) == 0):
+            if np.sum(confusion[letterIndex]) == 0:
                 r[index] = 0
             else:
                 r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[letterIndex])
             index += 1
 
-        # You will also need to change this
-        macro_r = 0
         # finding average of the recall score for global
         macro_r = np.average(r)
 
-        return (r, macro_r)
+        return r, macro_r
 
     @staticmethod
     def f1_score(confusion):
@@ -230,7 +217,6 @@ class Evaluator(object):
         #######################################################################
         #                 ** YOUR TASK: COMPLETE THIS METHOD **
         #######################################################################
-        #### NEEDS CHECKING FROM SOMEONE ELSE
         precision, macro_p = Evaluator.precision(confusion)
         recall, macro_r = Evaluator.recall(confusion)
 
@@ -239,13 +225,10 @@ class Evaluator(object):
             f[index] = 2 * (precision[index] * recall[index]) / (recall[index] + precision[index])
             index += 1
 
-        # You will also need to change this
-        macro_f = 0
-
         # finding average of the f1 for global
         macro_f = np.average(f)
 
-        return (f, macro_f)
+        return f, macro_f
 
     @staticmethod
     def print_eval(train_data, test_data):
@@ -262,7 +245,6 @@ class Evaluator(object):
         predictions = tree.predict(test)
         e = Evaluator()
         a = e.confusion_matrix(ytruth, predictions)
-        print("Order of matrix is ACEGOQ")
         print("Confusion" + "\n" + str(a))
         print("Accuracy: " + str(e.accuracy(a)))
         print("Recall: " + str(e.recall(a)))
@@ -276,3 +258,5 @@ if __name__ == "__main__":
     print("RESULTS FOR TRAIN_NOISY.TXT:")
     Evaluator.print_eval("data/train_noisy.txt", "data/test.txt")
     print("RESULTS FOR TRAIN_SUB.TXT:")
+    Evaluator.print_eval("data/train_sub.txt", "data/test.txt")
+

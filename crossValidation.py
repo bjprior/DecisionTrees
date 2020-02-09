@@ -4,8 +4,14 @@ import classification as cls
 import eval as ev
 from scipy import stats
 
+"""
+
+Implementation of k fold cross validation
+
+"""
 
 def k_fold_cross_validation(data_set, k, pruning=False):
+    """Carries out k fold cross validation on a data set, pruning by default is not carried out"""
     accuracy = np.zeros(k)
     tree = cls.DecisionTreeClassifier()
     best_tree = cls.DecisionTreeClassifier()
@@ -53,7 +59,6 @@ def k_fold_cross_validation(data_set, k, pruning=False):
             best_tree = tree
         print("Accuracy(" + str(i) + "):" + str(accuracy[i - 1]))
 
-    return accuracy, best_tree, trees
     if pruning:
         print("Pre pruning metrics")
         analyseListOfConfMatrix(prePruneConfMatrix)
@@ -62,8 +67,8 @@ def k_fold_cross_validation(data_set, k, pruning=False):
 
     return accuracy, best_tree, trees
 
-
 def analyseListOfConfMatrix(confMatrixList):
+    """Returns the average global metrics from a list of confusion matrices"""
     metrics = []
     for confMatrix in confMatrixList:
         foldMetrics = [ev.Evaluator.accuracy(confMatrix), ev.Evaluator.precision(confMatrix)[1],
@@ -77,6 +82,7 @@ def analyseListOfConfMatrix(confMatrixList):
     print("F1: " + str(np.mean(metrics[:, 3])) + " " + str(np.std(metrics[:, 3])))
 
 def k_decision_trees(testing, k, k_trees):
+    """Performs k-fold cross validation and uses resulting predictions to classify data by majority vote"""
     predictions = list()
 
     # Get predictions for each tree
@@ -95,6 +101,10 @@ def k_decision_trees(testing, k, k_trees):
 
 
 def split_set(data_set, k, fold, createValidationSet=False):
+    """Returns the data set split as:
+            1/kth test set
+            1/kth validation (optional)
+            Thee rest as training data"""
     if fold > k or fold < 1:
         print("Incorrect usage: fold value greater than k")
         return
@@ -122,6 +132,7 @@ def split_set(data_set, k, fold, createValidationSet=False):
 
 # Answer for
 def standard_dev(accuracy, k, n):
+    """Returns standard deviation from a list of accuracies"""
     errors = np.ones(k) - accuracy
     std_dev = np.sqrt((errors * accuracy) / n)
 
@@ -129,6 +140,7 @@ def standard_dev(accuracy, k, n):
 
 
 def print_results(predictions, labels, name):
+    """Prints metrics from a set of predictions to the command line"""
     eval = ev.Evaluator()
 
     confusion = eval.confusion_matrix(predictions, labels)
@@ -151,13 +163,14 @@ def print_results(predictions, labels, name):
 
 
 if __name__ == "__main__":
+    """Runs code for Q3"""
     # Data Imports
-    full_data = dr.parseFile("data/train_full.txt")
+    full_data = dr.parseFile("data/train_noisy.txt")
     test_data = dr.parseFile("data/test.txt")
     full_data = dr.mergeAttributesAndCharacteristics(full_data[0], full_data[1])
     test_data = dr.mergeAttributesAndCharacteristics(test_data[0], test_data[1])
 
-    k = 10
+    k = 3
     n = len(full_data) / k
     accuracy, best_tree, k_trees = k_fold_cross_validation(full_data, k)
 
@@ -179,5 +192,5 @@ if __name__ == "__main__":
 
     # Question 3.5
     k_predict = k_decision_trees(full_data, k, k_trees)
-
+    print(len(k_predict), len(testing_y))
     print_results(k_predict, testing_y, "K-Fold Mode Predict")

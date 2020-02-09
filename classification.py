@@ -321,9 +321,8 @@ class DecisionTreeClassifier(object):
         y = 100
         # midpoint of the window to plot root
         midx = (x1 + x2) / 2
-        plt.axis('off')
-
         plt.figure(figsize=(30, 20))
+        plt.axis('off')
         # plot root node as a rectangle
         # ha= horizonatal alignment, va= vertical alignment
         # text is plotted using coordinates midx (middle of width of screen) and y2 (top of screen)

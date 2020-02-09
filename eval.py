@@ -13,6 +13,8 @@
 ##############################################################################
 
 import numpy as np
+import dataReader as dr
+import classification as cp
 
 
 class Evaluator(object):

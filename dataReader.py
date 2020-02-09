@@ -168,15 +168,20 @@ if __name__ == "__main__":
     fullData = parseFile("data/train_full.txt")
     fullData = mergeAttributesAndCharacteristics(fullData[0], fullData[1])
     fullDataScatter = attributesToScatterData(fullData)
-    fullDataClassPercent = getClassFreq(fullData);
+    fullDataClassPercent = getClassFreq(fullData)
 
     subData = parseFile("data/train_sub.txt")
     subData = mergeAttributesAndCharacteristics(subData[0], subData[1])
-    subDataClassPercent = getClassFreq(subData);
+    subDataClassPercent = getClassFreq(subData)
 
     noisyData = parseFile("data/train_noisy.txt")
     noisyData = mergeAttributesAndCharacteristics(noisyData[0], noisyData[1])
-    noisyDataClassPercent = getClassFreq(noisyData);
+    noisyDataClassPercent = getClassFreq(noisyData)
+
+    testData = parseFile("data/validation.txt")
+    testData = mergeAttributesAndCharacteristics(testData[0], testData[1])
+    testDataClassPercent = getClassFreq(testData)
+
 
     # Plot relevant graphs
     plotScatterResults(fullDataScatter, "q1_1.png")
@@ -184,6 +189,9 @@ if __name__ == "__main__":
                            "train_sub.txt", "q1_2.png")
     plotSideBySideBarChart(fullDataClassPercent[0], fullDataClassPercent[1], "train_full.txt", noisyDataClassPercent[1],
                            "train_sub.txt", "q1_3.png")
+
+    plotSideBySideBarChart(fullDataClassPercent[0], fullDataClassPercent[1], "train_full.txt", testDataClassPercent[1],
+                           "test.txt", "q4_1.png")
 
     # Ouput raw data to terminal
     print("Class percentages")

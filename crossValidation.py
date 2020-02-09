@@ -21,9 +21,10 @@ def k_fold_cross_validation(data_set, k, pruning=False):
         training = split[1]
         training_x = training[:, :-1]
         training_y = [chr(i) for i in training.T[-1]]
-        testing_y = [chr(i) for i in testing.T[-1]]
 
         # Train tree
+        testing_y = [chr(i) for i in testing.T[-1]]
+
         tree.train(training_x, training_y)
 
         if pruning:
@@ -43,15 +44,16 @@ def k_fold_cross_validation(data_set, k, pruning=False):
         testing_y = [chr(i) for i in testing.T[-1]]
         confusion = eval.confusion_matrix(predictions, testing_y)
         accuracy[i - 1] = eval.accuracy(confusion)
+
+        # Save tree with best accuracy
         confusion = ev.Evaluator.confusion_matrix(predictions, testing_y)
         postPruneConfMatrix.append(confusion)
         accuracy[i - 1] = ev.Evaluator.accuracy(confusion)
-
-        # Save tree with best accuracy
         if accuracy[i - 1] > max_accuracy:
             best_tree = tree
-        #print("Accuracy(" + str(i) + "):" + str(accuracy[i - 1]))
+        print("Accuracy(" + str(i) + "):" + str(accuracy[i - 1]))
 
+    return accuracy, best_tree, trees
     if pruning:
         print("Pre pruning metrics")
         analyseListOfConfMatrix(prePruneConfMatrix)
@@ -78,8 +80,8 @@ def k_decision_trees(testing, k, k_trees):
     predictions = list()
 
     # Get predictions for each tree
-    for i in range(0, k):
-        predictions.append(k_trees[i].predict(testing))
+    for i in range(1, k + 1):
+        predictions.append(k_trees[i - 1].predict(testing))
 
     prediction = np.array(predictions)
     prediction.astype(str)
@@ -154,25 +156,19 @@ if __name__ == "__main__":
     k = 10
     accuracy, best_tree, k_trees = k_fold_cross_validation(full_data, k)
 
-    # Print Accuracies and Standard Deviations
+    # Print Accuracies and Standard Deviations for Question 3.3
     print("Accuracy: " + str(round(accuracy.mean(), 4)))
     print("Standard Deviation: " + str(round(accuracy.std(), 4)))
 
-    #                  Question 3.4
-    # split data into sets required
+    # Question 3.4
     x = full_data[:, :-1]
     y = [chr(i) for i in full_data.T[-1]]
-    testing_y =[chr(i) for i in test_data.T[-1]]
-
-    # Train decision tree on train_full and get predictions from testing.txt
     Full_trained = cls.DecisionTreeClassifier()
     Full_trained.train(x, y)
+    testing_y =[chr(i) for i in test_data.T[-1]]
     full_predict = Full_trained.predict(test_data)
-
-    # Get predictions from most accurate K-fold cross validation tree
     cross_predict = best_tree.predict(test_data)
 
-    # Print results for fully trained and most accurate tree
     print_results(full_predict, testing_y, "Fully Trained")
     print_results(cross_predict, testing_y, "K-Fold Trained")
 

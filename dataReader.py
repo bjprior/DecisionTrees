@@ -1,12 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+"""
 
-# Reads in file line by line and appends to array
-# Returns a multi-dim array of dimensions numRows x numFeatures+1
-# with the final column being the classification
-# https://stackoverflow.com/questions/19056125/reading-a-file-into-a-multidimensional-array-with-python
+A file to read in given data files into a 2D numpy array of form:
+[[Attribute11, Attribute12, ..., Attribute1N, Classification1],
+[Attribute21, Attribute22, ..., Attribute2N, Classification2],
+.                                           .
+.                                           .       
+.                                           .
+AttributeM1, AttributeM2, ..., AttributeMN, ClassificationM]]
+
+Also includes a number of functions to then analyse this parsed data and present visually using matplotlib
+
+"""
+
 def parseFile(fname):
+    """Reads in file line by line and appends to array
+        returns a multi-dim array of dimensions numRows x numFeatures+1
+        with the final column being the classification """
     attributes = []
     characteristics = []
     with open(fname) as file:
@@ -19,24 +31,27 @@ def parseFile(fname):
 
 
 def mergeAttributesAndCharacteristics(attributes, characteristics):
+    "Appends array of 1D chars cast to ASCII numbers to the final column of a 2D array of attributes"
     return np.c_[attributes, [ord(i) for i in characteristics]]
 
 
 def attributesToScatterData(data):
+    """Returns the attributes, attribute values and their frequency for all attributes in a given dataset"""
     attributeNumber = 0
     attribute = []
     attributeValue = []
     frequency = []
 
     # For each column in the data append the frequency value for each attributeValue that is present
-    for column in data[:, :-1].transpose():
+    for column in data[:, :-1].transpose():  # Final column is classification so not included
         setAttributeValueFreqFromAttributeColumn(attribute, attributeValue, frequency, column, attributeNumber)
         attributeNumber += 1
     return attribute, attributeValue, frequency
 
 
-# Returns the classification and percentage occurence of that class for a data set
+
 def getClassFreq(dataSet):
+    """Get the classification and percentage occurence of that class for a data set"""
     classification = []
     normFrac = []
     # Get characteristic data from final column of the datasets
@@ -46,6 +61,7 @@ def getClassFreq(dataSet):
 
 def setAttributeValueFreqFromAttributeColumn(attributeList, attributeValueList, frequencyList, dataColumn,
                                              attributeName):
+    """Adds attribute names, values and normalised frequency to relevant input lists"""
     normFactor = 1 / len(dataColumn)
     attributeValueFreq = {}
 
@@ -64,6 +80,7 @@ def setAttributeValueFreqFromAttributeColumn(attributeList, attributeValueList, 
 
 
 def plotScatterResults(scatterResults, fname):
+    """Plots given data as a scatter graph saving the resulting graph to fname"""
     plt.figure(figsize=(6, 4), dpi=140)
     plt.scatter(scatterResults[0], scatterResults[1], s=[i * 1000 for i in scatterResults[2]], c='b', alpha=0.7)
 
@@ -76,6 +93,7 @@ def plotScatterResults(scatterResults, fname):
 
 
 def plotSideBySideBarChart(xlabels, dataSet1, dataSet1Name, dataSet2, dataSet2Name, fname):
+    """Plots dataSet1 and dataSet2 side by side along a common x axis and saves to fname"""
     plt.figure(figsize=(6, 4), dpi=140)
     barWidth = 0.4
     xpos = np.arange(len(xlabels))
@@ -93,6 +111,7 @@ def plotSideBySideBarChart(xlabels, dataSet1, dataSet1Name, dataSet2, dataSet2Na
 
 
 def percentageChange(dataSet1, dataSet2):
+    """Prints the % of data rows have changed between dataSet1 and dataSet2"""
     numUnchanged = 0
     for data in dataSet2:
         if any((dataSet1[:] == data).all(1)):
@@ -103,6 +122,7 @@ def percentageChange(dataSet1, dataSet2):
 
 
 if __name__ == "__main__":
+    """Run analysis of given data files"""
     # Read in data
     fullData = parseFile("data/train_full.txt")
     fullData = mergeAttributesAndCharacteristics(fullData[0], fullData[1])
@@ -120,7 +140,6 @@ if __name__ == "__main__":
     testData = parseFile("data/validation.txt")
     testData = mergeAttributesAndCharacteristics(testData[0], testData[1])
     testDataClassPercent = getClassFreq(testData)
-
 
     # Plot relevant graphs
     plotScatterResults(fullDataScatter, "q1_1.png")

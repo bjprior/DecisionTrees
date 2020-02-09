@@ -1,8 +1,17 @@
 import numpy as np
 import dataReader
 
+"""
+
+Main purpose of file is to find split of data set to optimise the information gain (according to the ideas of 
+entropy) with respect to the child data
+
+"""
+
 
 def findBestNode(dataSet):
+    """Returns the split attribute, value and resulting child data sets that result in the greatest
+        infomation gain by spliting the given data set"""
     maxInfoGain = 0
     splitAttribute = -1
     splitAttributeValue = -1
@@ -37,6 +46,7 @@ def findBestNode(dataSet):
 
 
 def calcEntropy(dataSet):
+    """Returns the entropy of a dataSet"""
     # Calc entropy of a data set by getting count of each value converting this to a probability
     # and then converting this to an entropy
     (unique, counts) = np.unique(dataSet, return_counts=True)
@@ -45,6 +55,8 @@ def calcEntropy(dataSet):
 
 
 if __name__ == "__main__":
+    """Manual testing of findBestNode function"""
     dataSet = dataReader.parseFile("data/train_full.txt")
-    findBestNode(dataSet)
+    dataSet = dataReader.mergeAttributesAndCharacteristics(dataSet[0], dataSet[1])
+    print(findBestNode(dataSet))
 

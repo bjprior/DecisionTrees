@@ -11,8 +11,9 @@ import numpy as np
 import dataReader as dr
 import entropy as ent
 import matplotlib.pyplot as plt
-
+from scipy import stats
 import eval
+
 
 class LeafNode(object):
     """
@@ -21,27 +22,23 @@ class LeafNode(object):
     Attributes
     ----------
     A letter which contains the majority label
-
+    Number of data points used to classify the node
+    Entropy of the data points used to classify the node
     """
 
-    def __init__(self, letter, leafSize):
-        self.letter = letter
-        self.leafSize = leafSize
-        # print("LeafNode: " + str(letter))
-
-    def __init__(self, letter, leaf_total, entropy=0):
-        self.letter = letter
-        self.leaf_total = leaf_total
-        self.entropy = entropy
+    def __init__(self, letterList):
+        self.letter = stats.mode(letterList)[0][0]
+        self.leaf_total = len(letterList)
+        self.letterList = letterList
+        self.entropy = ent.calcEntropy(letterList)
 
     def __str__(self):
+        """To string method for visual tree representation"""
         return chr(self.letter) + "\n" + "Tot:" + str(self.leaf_total) + "\n" + "S:" + str(round(self.entropy, 2))
 
     def NodeHeight(self):
+        """All leaf nodes have depth 0 by default"""
         return 0
-
-    def prune(self):
-        return False, self
 
 
 class Node(object):
@@ -61,10 +58,18 @@ class Node(object):
 
     right_node: Node
         The Node to the right, either leads to another Node or a LeafNode(label)
+
+    letters: Node
+        The letters present in the dataset used to create the node
+
+    entropy: Node
+        The entropy of the dataset used to create the node
+
+    node_total: Node
+        Total number of data points in the data set used to create the node
     """
 
     def __init__(self, split_col, threshold, leftData, rightData, letters, entropy, node_total):
-        # print("Node: " + str(split_col) + " " + str(threshold))
         self.split_col = split_col
         self.threshold = threshold
         self.left_node = Node.induceDecisionTree(leftData)
@@ -74,22 +79,27 @@ class Node(object):
         self.node_total = node_total
 
     def __str__(self):
+        """To string method for visual representation of node in a tree"""
         return "x" + str(self.split_col) + "<" + str(self.threshold) + "\n" + "Tot:" + str(
             self.node_total) + "\n" + "E:" + str(round(self.entropy, 2)) + "\n" + str(self.letters) + "\n"
 
     def NodeHeight(self):
+        """Gives max distance of node from a leaf node (for the root node= max depth of tree)"""
         return 1 + max(self.left_node.NodeHeight(), self.right_node.NodeHeight())
 
     @staticmethod
     def induceDecisionTree(dataSet):
+        """"Recursive function to create nodes of tree based upon a given data set"""
+        # Check that their are unique attributes and classifications
         attributeRepeats = len(np.unique(dataSet[:, :-1], axis=0))
         classificationRepeats = len(np.unique(dataSet[:, -1]))
         node_total = len(dataSet)
         entropy = ent.calcEntropy(dataSet[:, -1])
-
+        # If not the data set cannot be split further so create a leafNode. Also true if length of dataSet is 1
         if (len(dataSet) == 1) or (attributeRepeats == 1) or (classificationRepeats == 1):
-            return LeafNode(dataSet[0][-1], node_total, entropy)
+            return LeafNode(dataSet[:, -1])
 
+        # Get dataSet info for __str__ method
         node_total = len(dataSet)
         (unique, counts) = np.unique(dataSet[:, -1], return_counts=True)
         characters = list()
@@ -98,30 +108,43 @@ class Node(object):
         np.asarray(characters)
         letters = np.asarray((characters, counts)).T
 
+        # Get optimal splitting point
         split_col, threshold, leftChildData, rightChildData = ent.findBestNode(dataSet)
 
+        # Create new node with children given by the split defined above
         return Node(split_col, threshold, leftChildData, rightChildData, letters, entropy, node_total)
 
-    def prune(self, decTree, accuracy, validationData):
+    def reducedErrorPrune(self, decTree, accuracy, validationData):
+        """An implementation of Reduced accuracy pruning"""
         leftCompacted = False
         rightCompacted = False
-        if isinstance(self.left_node, LeafNode) and isinstance(self.right_node, LeafNode) and (self != decTree.rootNode):
+        # If both children are leaf nodes compact them
+        if isinstance(self.left_node, LeafNode) and isinstance(self.right_node, LeafNode) and (
+                self != decTree.rootNode):
             return self.compact(), accuracy, True
         if isinstance(self.left_node, Node):
+            # Save state
             savedNode = self.left_node
             savedAccuracy = accuracy
-            self.left_node, accuracy, leftCompacted = self.left_node.prune(decTree, accuracy, validationData)
+            # Attempt to compact via a recursive call
+            self.left_node, accuracy, leftCompacted = self.left_node.reducedErrorPrune(decTree, accuracy,
+                                                                                       validationData)
             if leftCompacted:
+                # If accuracy reduced return to saved state
                 accuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData[0], validationData[1])
                 if accuracy < savedAccuracy:
                     self.left_node = savedNode
                     accuracy = savedAccuracy
                     leftCompacted = False
         if isinstance(self.right_node, Node):
+            # Save state
             savedNode = self.right_node
             savedAccuracy = accuracy
-            self.right_node, accuracy, rightCompacted = self.right_node.prune(decTree, accuracy, validationData)
+            # Attempt to compact via a recursive call
+            self.right_node, accuracy, rightCompacted = self.right_node.reducedErrorPrune(decTree, accuracy,
+                                                                                          validationData)
             if rightCompacted:
+                # If accuracy reduced return to saved state
                 accuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData[0], validationData[1])
                 if accuracy < savedAccuracy:
                     self.right_node = savedNode
@@ -130,11 +153,9 @@ class Node(object):
         return self, accuracy, (leftCompacted | rightCompacted)
 
     def compact(self):
-        if self.left_node.leaf_total > self.right_node.leaf_total:
-            majorityLetter = self.left_node.letter
-        else:
-            majorityLetter = self.right_node.letter
-        return LeafNode(majorityLetter, (self.right_node.leaf_total + self.left_node.leaf_total))
+        """Compact 2 child leaf nodes by combining attributes to return a single lead node"""
+        letterList = np.append(self.left_node.letterList, self.right_node.letterList)
+        return LeafNode(letterList)
 
 
 class DecisionTreeClassifier(object):
@@ -231,6 +252,7 @@ class DecisionTreeClassifier(object):
 
     @staticmethod
     def predictInstance(node, attributeList):
+        """Recursive function to return a prediction from the decision tree given a list of attributes"""
         if isinstance(node, LeafNode):
             return chr(node.letter)
         else:
@@ -240,13 +262,15 @@ class DecisionTreeClassifier(object):
                 return DecisionTreeClassifier.predictInstance(node.right_node, attributeList)
 
     def prune(self, validationData):
+        """Continually calls reduced error prunning tree with a given set of validation data
+            until no further pruning can occur"""
         pruneOccurred = True
         accuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData[0], validationData[1])
         while pruneOccurred:
-            node, accuracy, pruneOccurred = self.rootNode.prune(self, accuracy, validationData)
-            print(accuracy)
+            node, accuracy, pruneOccurred = self.rootNode.reducedErrorPrune(self, accuracy, validationData)
 
     def plot_tree(self):
+        """Plots a visual representation of the current tree to a depth of 4 nodes"""
         if not self.is_trained:
             raise Exception("Decision Tree classifier has not yet been trained.")
         # set window size
@@ -271,6 +295,7 @@ class DecisionTreeClassifier(object):
 
     @staticmethod
     def plot_tree_helper(parentx, node, x1, x2, y, steps):
+        """Helper function to plot a visual rep of the decision tree"""
         # calculate mid point of the sub window
         midx = (x1 + x2) / 2
         # if node is a leaf, plot as a filled in box, else plot with a white background
@@ -285,8 +310,8 @@ class DecisionTreeClassifier(object):
             # Line to parent, adjusting the number '5' with line length required
             plt.plot([parentx, midx], [y + 5, y], 'brown', linestyle=':', marker='')
             # change depth of tree shown
-            # if (steps == 3):
-            #     return
+            if steps == 3:
+                return
             left_height = node.left_node.NodeHeight() + 1
             right_height = node.right_node.NodeHeight() + 1
             # update the weight value
@@ -300,7 +325,8 @@ class DecisionTreeClassifier(object):
 
 
 if __name__ == "__main__":
-    trainingData = dr.parseFile("data/train_noisy.txt")
+    """Mock training programme"""
+    trainingData = dr.parseFile("data/train_full.txt")
     validationData = dr.parseFile("data/validation.txt")
     testData = dr.parseFile("data/test.txt")
 
@@ -312,7 +338,6 @@ if __name__ == "__main__":
 
     print("----------------PRUNE------------------------")
     tree.prune(validationData)
-    #tree.plot_tree()
+    tree.plot_tree()
     print("----------------Test------------------------")
     print(eval.Evaluator.getAccuracyOfDecisionTree(tree, testData[0], testData[1]))
-

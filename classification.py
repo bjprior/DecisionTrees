@@ -291,7 +291,7 @@ class DecisionTreeClassifier(object):
         DecisionTreeClassifier.plot_tree_helper(midx, self.rootNode.left_node, x1, midx, y - 5, steps)
         DecisionTreeClassifier.plot_tree_helper(midx, self.rootNode.right_node, midx, x2, y - 5, steps)
         plt.savefig("tree.png")
-        plt.show()
+        plt.show(aspect="auto")
 
     @staticmethod
     def plot_tree_helper(parentx, node, x1, x2, y, steps):
@@ -310,8 +310,8 @@ class DecisionTreeClassifier(object):
             # Line to parent, adjusting the number '5' with line length required
             plt.plot([parentx, midx], [y + 5, y], 'brown', linestyle=':', marker='')
             # change depth of tree shown
-            if steps == 3:
-                return
+            # if steps == 3:
+            #     return
             left_height = node.left_node.NodeHeight() + 1
             right_height = node.right_node.NodeHeight() + 1
             # update the weight value
@@ -333,7 +333,7 @@ if __name__ == "__main__":
     tree = DecisionTreeClassifier()
     tree.train(trainingData[0], trainingData[1])
     # tree.predict(data)
-    # tree.plot_tree()
+    tree.plot_tree()
     print(eval.Evaluator.getAccuracyOfDecisionTree(tree, testData[0], testData[1]))
 
     print("----------------PRUNE------------------------")

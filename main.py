@@ -53,3 +53,4 @@ if __name__ == "__main__":
     evaluator = Evaluator()
     confusion = evaluator.confusion_matrix(predictions, testData[1])
     printMetric(confusion)
+    classifier.plot_tree()

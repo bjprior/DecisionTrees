@@ -151,7 +151,7 @@ if __name__ == "__main__":
     full_data = dr.mergeAttributesAndCharacteristics(full_data[0], full_data[1])
     test_data = dr.mergeAttributesAndCharacteristics(test_data[0], test_data[1])
 
-    # Random Shuffle data once
+    # Random shuffle data once
     np.random.shuffle(full_data)
 
     #                  Question 3.3
@@ -165,12 +165,17 @@ if __name__ == "__main__":
     # Question 3.4
     x = full_data[:, :-1]
     y = [chr(i) for i in full_data.T[-1]]
-    Full_trained = cls.DecisionTreeClassifier()
-    Full_trained.train(x, y)
     testing_y = [chr(i) for i in test_data.T[-1]]
-    full_predict = Full_trained.predict(test_data)
+
+    # Train tree on train_full.txt
+    full_trained = cls.DecisionTreeClassifier()
+    full_trained.train(x, y)
+
+    # Generate predictions
+    full_predict = full_trained.predict(test_data)
     cross_predict = best_tree.predict(test_data)
 
+    # Print results
     print_results(full_predict, testing_y, "Fully Trained")
     print_results(cross_predict, testing_y, "K-Fold Trained")
 

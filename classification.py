@@ -169,31 +169,38 @@ class Node(object):
         return Node(split_col, threshold, leftChildData, rightChildData, letters, entropy, node_total)
 
     def prune(self, decTree, accuracy, validationData):
-        leftCompacted = False
-        rightCompacted = False
-        if isinstance(self.left_node, LeafNode) and isinstance(self.right_node, LeafNode) and (self != decTree.rootNode):
+        if isinstance(self.left_node, LeafNode) and isinstance(self.right_node, LeafNode):
+            # print("leaf")
             return self.compact(), accuracy, True
         if isinstance(self.left_node, Node):
             savedNode = self.left_node
-            savedAccuracy = accuracy
-            self.left_node, accuracy, leftCompacted = self.left_node.prune(decTree, accuracy, validationData)
-            if leftCompacted:
-                accuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData[0], validationData[1])
-                if accuracy < savedAccuracy:
-                    self.left_node = savedNode
-                    accuracy = savedAccuracy
-                    leftCompacted = False
+            self.left_node, accuracy, compacted = self.left_node.prune(decTree, accuracy, validationData)
+            newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData[0], validationData[1])
+            # print(newAccuracy, accuracy)
+            if compacted and newAccuracy < accuracy:
+                self.left_node = savedNode
+            else:
+                accuracy = newAccuracy
         if isinstance(self.right_node, Node):
             savedNode = self.right_node
-            savedAccuracy = accuracy
-            self.right_node, accuracy, rightCompacted = self.right_node.prune(decTree, accuracy, validationData)
-            if rightCompacted:
-                accuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData[0], validationData[1])
-                if accuracy < savedAccuracy:
-                    self.right_node = savedNode
-                    accuracy = savedAccuracy
-                    rightCompacted = False
-        return self, accuracy, (leftCompacted | rightCompacted)
+            self.right_node, accuracy, compacted = self.right_node.prune(decTree, accuracy, validationData)
+            newAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(decTree, validationData[0], validationData[1])
+            # print(newAccuracy, accuracy)
+            if compacted and newAccuracy <= accuracy:
+                self.right_node = savedNode
+            else:
+                accuracy = newAccuracy
+        return self, accuracy, False
+
+    @staticmethod
+    def pruneChildNode(childNode, decTree, accuracy):
+        savedNode = childNode
+        savedAccuracy = accuracy
+        accuracy, childNode = childNode.prune(decTree)
+        if accuracy < savedAccuracy:
+            childNode = savedNode
+            accuracy = savedAccuracy
+        return childNode, accuracy
 
     def compact(self):
         if self.left_node.leaf_total > self.right_node.leaf_total:
@@ -305,12 +312,15 @@ class DecisionTreeClassifier(object):
             else:
                 return DecisionTreeClassifier.predictInstance(node.right_node, attributeList)
 
-    def prune(self, validationData):
-        pruneOccurred = True
-        accuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData[0], validationData[1])
-        while pruneOccurred:
-            node, accuracy, pruneOccurred = self.rootNode.prune(self, accuracy, validationData)
+    def prune(self, validationFname):
+        validationData = dr.parseFile(validationFname)
+        accuracy = 0
+        prunedAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData[0], validationData[1])
+        while prunedAccuracy > accuracy:
+            accuracy = prunedAccuracy
             print(accuracy)
+            self.rootNode.prune(self, accuracy, validationData)
+            prunedAccuracy = eval.Evaluator.getAccuracyOfDecisionTree(self, validationData[0], validationData[1])
 
     def plot_tree(self):
         if not self.is_trained:
@@ -371,19 +381,19 @@ class DecisionTreeClassifier(object):
 
 
 if __name__ == "__main__":
-    trainingData = dr.parseFile("data/train_noisy.txt")
+    trainingData = dr.parseFile("data/train_full.txt")
     validationData = dr.parseFile("data/validation.txt")
     testData = dr.parseFile("data/test.txt")
 
     tree = DecisionTreeClassifier()
     tree.train(trainingData[0], trainingData[1])
     # tree.predict(data)
-    #tree.plot_tree()
+    tree.plot_tree()
     print(eval.Evaluator.getAccuracyOfDecisionTree(tree, testData[0], testData[1]))
 
     print("----------------PRUNE------------------------")
-    tree.prune(validationData)
-    #tree.plot_tree()
+    tree.prune("data/validation.txt")
+    tree.plot_tree()
     print("----------------Test------------------------")
     print(eval.Evaluator.getAccuracyOfDecisionTree(tree, testData[0], testData[1]))
 

@@ -76,10 +76,10 @@ class Evaluator(object):
                     if (trueLetter == annotation[index] and predictedLetter == prediction[index]):
                         counter += 1
                     confusion[row][col] = counter
-                col += 1
-                col %= len(class_labels)
-            row += 1
-            row %= len(class_labels)
+                row += 1
+                row %= len(class_labels)
+            col += 1
+            col %= len(class_labels)
 
         return confusion
 
@@ -147,7 +147,7 @@ class Evaluator(object):
             if (np.sum(confusion[:, letterIndex]) == 0):
                 p[index] = 0
             else:
-                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:, letterIndex])
+                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[letterIndex])
             index += 1
 
         # You will also need to change this
@@ -192,7 +192,7 @@ class Evaluator(object):
             if (np.sum(confusion[letterIndex]) == 0):
                 r[index] = 0
             else:
-                r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[letterIndex])
+                r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:, letterIndex])
             index += 1
 
         # You will also need to change this

@@ -147,7 +147,7 @@ class Evaluator(object):
             if (np.sum(confusion[:, letterIndex]) == 0):
                 p[index] = 0
             else:
-                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[letterIndex])
+                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:, letterIndex])
             index += 1
 
         # You will also need to change this
@@ -192,7 +192,7 @@ class Evaluator(object):
             if (np.sum(confusion[letterIndex]) == 0):
                 r[index] = 0
             else:
-                r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:, letterIndex])
+                r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[letterIndex])
             index += 1
 
         # You will also need to change this
@@ -260,7 +260,7 @@ class Evaluator(object):
         test = dr.mergeAttributesAndCharacteristics(xtruth, ytruth)
         predictions = tree.predict(test)
         e = Evaluator()
-        a = e.confusion_matrix(ytruth, predictions)
+            a = e.confusion_matrix(ytruth, predictions)
         print("Order of matrix is ACEGOQ")
         print("Confusion" + "\n" + str(a))
         print("Accuracy: " + str(e.accuracy(a)))

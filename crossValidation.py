@@ -76,6 +76,7 @@ def analyseListOfConfMatrix(confMatrixList):
     print("Recall: " + str(np.mean(metrics[:, 2])) + " " + str(np.std(metrics[:, 2])))
     print("F1: " + str(np.mean(metrics[:, 3])) + " " + str(np.std(metrics[:, 3])))
 
+
 def k_decision_trees(testing, k, k_trees):
     predictions = list()
 
@@ -165,7 +166,7 @@ if __name__ == "__main__":
     y = [chr(i) for i in full_data.T[-1]]
     Full_trained = cls.DecisionTreeClassifier()
     Full_trained.train(x, y)
-    testing_y =[chr(i) for i in test_data.T[-1]]
+    testing_y = [chr(i) for i in test_data.T[-1]]
     full_predict = Full_trained.predict(test_data)
     cross_predict = best_tree.predict(test_data)
 

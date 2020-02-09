@@ -59,4 +59,3 @@ if __name__ == "__main__":
     dataSet = dataReader.parseFile("data/train_full.txt")
     dataSet = dataReader.mergeAttributesAndCharacteristics(dataSet[0], dataSet[1])
     print(findBestNode(dataSet))
-

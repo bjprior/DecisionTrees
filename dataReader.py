@@ -15,6 +15,7 @@ Also includes a number of functions to then analyse this parsed data and present
 
 """
 
+
 def parseFile(fname):
     """Reads in file line by line and appends to array
         returns a multi-dim array of dimensions numRows x numFeatures+1
@@ -47,7 +48,6 @@ def attributesToScatterData(data):
         setAttributeValueFreqFromAttributeColumn(attribute, attributeValue, frequency, column, attributeNumber)
         attributeNumber += 1
     return attribute, attributeValue, frequency
-
 
 
 def getClassFreq(dataSet):

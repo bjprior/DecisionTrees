@@ -17,13 +17,11 @@ def parseFile(fname):
             characteristics.append(line[-1])
     return np.array(attributes), characteristics
 
-# Reads in an array for attributes and an array for characteristics
-# Returns a merged array of the two  arrays
-# Note: Characteristic is represented as its ASCII value)
+
 def mergeAttributesAndCharacteristics(attributes, characteristics):
     return np.c_[attributes, [ord(i) for i in characteristics]]
 
-# Reads in array of attributes and characteristics
+
 def attributesToScatterData(data):
     attributeNumber = 0
     attribute = []
@@ -36,7 +34,7 @@ def attributesToScatterData(data):
         attributeNumber += 1
     return attribute, attributeValue, frequency
 
-# Reads in a dataset of the characteristics and attributes
+
 # Returns the classification and percentage occurence of that class for a data set
 def getClassFreq(dataSet):
     classification = []
@@ -64,8 +62,7 @@ def setAttributeValueFreqFromAttributeColumn(attributeList, attributeValueList, 
         attributeValueList.append(attributeValue)
         frequencyList.append(attributeValueFreq[attributeValue] * normFactor)
 
-# Reads in the scatterResuts from
-# Creates a scatter plot of characteristics and attributes with their frequencies
+
 def plotScatterResults(scatterResults, fname):
     plt.figure(figsize=(6, 4), dpi=140)
     plt.scatter(scatterResults[0], scatterResults[1], s=[i * 1000 for i in scatterResults[2]], c='b', alpha=0.7)
@@ -77,8 +74,7 @@ def plotScatterResults(scatterResults, fname):
     plt.savefig(fname)
     plt.show()
 
-# Reads in labes for x-axis, two datasets and their names and a filename
-# Creates a bar char of the percentage occurence for each characteristic for each dataset
+
 def plotSideBySideBarChart(xlabels, dataSet1, dataSet1Name, dataSet2, dataSet2Name, fname):
     plt.figure(figsize=(6, 4), dpi=140)
     barWidth = 0.4
@@ -95,8 +91,7 @@ def plotSideBySideBarChart(xlabels, dataSet1, dataSet1Name, dataSet2, dataSet2Na
     plt.savefig(fname)
     plt.show()
 
-# Reads in two datasets
-# Prints the percentage change between the two attributes
+
 def percentageChange(dataSet1, dataSet2):
     numUnchanged = 0
     for data in dataSet2:
@@ -112,15 +107,20 @@ if __name__ == "__main__":
     fullData = parseFile("data/train_full.txt")
     fullData = mergeAttributesAndCharacteristics(fullData[0], fullData[1])
     fullDataScatter = attributesToScatterData(fullData)
-    fullDataClassPercent = getClassFreq(fullData);
+    fullDataClassPercent = getClassFreq(fullData)
 
     subData = parseFile("data/train_sub.txt")
     subData = mergeAttributesAndCharacteristics(subData[0], subData[1])
-    subDataClassPercent = getClassFreq(subData);
+    subDataClassPercent = getClassFreq(subData)
 
     noisyData = parseFile("data/train_noisy.txt")
     noisyData = mergeAttributesAndCharacteristics(noisyData[0], noisyData[1])
-    noisyDataClassPercent = getClassFreq(noisyData);
+    noisyDataClassPercent = getClassFreq(noisyData)
+
+    testData = parseFile("data/validation.txt")
+    testData = mergeAttributesAndCharacteristics(testData[0], testData[1])
+    testDataClassPercent = getClassFreq(testData)
+
 
     # Plot relevant graphs
     plotScatterResults(fullDataScatter, "q1_1.png")
@@ -128,6 +128,9 @@ if __name__ == "__main__":
                            "train_sub.txt", "q1_2.png")
     plotSideBySideBarChart(fullDataClassPercent[0], fullDataClassPercent[1], "train_full.txt", noisyDataClassPercent[1],
                            "train_sub.txt", "q1_3.png")
+
+    plotSideBySideBarChart(fullDataClassPercent[0], fullDataClassPercent[1], "train_full.txt", testDataClassPercent[1],
+                           "test.txt", "q4_1.png")
 
     # Ouput raw data to terminal
     print("Class percentages")

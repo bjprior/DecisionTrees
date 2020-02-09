@@ -7,6 +7,24 @@ import matplotlib.pyplot as plt
 # with the final column being the classification
 # https://stackoverflow.com/questions/19056125/reading-a-file-into-a-multidimensional-array-with-python
 def parseFile(fname):
+    """
+    Returns the corresponding numpy array for attributes
+
+    Also returns the corresponding numpy array for the characteristics
+
+     Parameters
+    ----------
+    fname : string
+        the file name
+
+    Returns
+    -------
+    np.array:
+        A NxM dimensional numpy array for attributes
+
+    np.array:
+        A N dimensional numpy array for characteristics
+    """
     attributes = []
     characteristics = []
     with open(fname) as file:
@@ -15,14 +33,54 @@ def parseFile(fname):
             line = line.strip()
             attributes.append([int(attribute) for attribute in line[:-2].split(",")])
             characteristics.append(line[-1])
-    return np.array(attributes), characteristics
+    return np.array(attributes), np.array(characteristics)
 
-
+# Reads in an array for attributes and an array for characteristics
+# Returns a merged array of the two  arrays
+# Note: Characteristic is represented as its ASCII value)
 def mergeAttributesAndCharacteristics(attributes, characteristics):
+    """
+    Returns merged of attributes and characteristics numpy arrays
+
+    Parameters
+    ----------
+    attributes : np.array
+        A NxM dimensional numpy array for attributes
+    characterisitcs: np.array:
+        A N dimensional numpy array for characteristics
+
+    Returns
+    -------
+    np.array:
+        A Nx(M+1) dimensional numpy array for attributes and characteristics
+        (last column for characteristic)
+    """
     return np.c_[attributes, [ord(i) for i in characteristics]]
 
-
+# Reads in array of attributes and characteristics
 def attributesToScatterData(data):
+    """
+    Returns attributes in the dataset
+
+    Also returns attribute values
+
+    Also returns frequency of occurence of these attributes
+
+    Parameters
+    ----------
+    data : np.array
+        A NxM dimensional numpy array for attributes
+
+    Returns
+    -------
+    np.array:
+        a K dimensional numpy array representing the attributes present in dataset
+    np.array:
+        a KxN dimensional numpy array representing the values for each attribute in dataset
+    np.array:
+        a KxN dimensional numpy array representing the frequency of each value for each attribute in dataset
+
+    """
     attributeNumber = 0
     attribute = []
     attributeValue = []
@@ -34,7 +92,7 @@ def attributesToScatterData(data):
         attributeNumber += 1
     return attribute, attributeValue, frequency
 
-
+# Reads in a dataset of the characteristics and attributes
 # Returns the classification and percentage occurence of that class for a data set
 def getClassFreq(dataSet):
     classification = []
@@ -62,7 +120,8 @@ def setAttributeValueFreqFromAttributeColumn(attributeList, attributeValueList, 
         attributeValueList.append(attributeValue)
         frequencyList.append(attributeValueFreq[attributeValue] * normFactor)
 
-
+# Reads in the scatterResuts from
+# Creates a scatter plot of characteristics and attributes with their frequencies
 def plotScatterResults(scatterResults, fname):
     plt.figure(figsize=(6, 4), dpi=140)
     plt.scatter(scatterResults[0], scatterResults[1], s=[i * 1000 for i in scatterResults[2]], c='b', alpha=0.7)
@@ -74,7 +133,8 @@ def plotScatterResults(scatterResults, fname):
     plt.savefig(fname)
     plt.show()
 
-
+# Reads in labes for x-axis, two datasets and their names and a filename
+# Creates a bar char of the percentage occurence for each characteristic for each dataset
 def plotSideBySideBarChart(xlabels, dataSet1, dataSet1Name, dataSet2, dataSet2Name, fname):
     plt.figure(figsize=(6, 4), dpi=140)
     barWidth = 0.4
@@ -91,7 +151,8 @@ def plotSideBySideBarChart(xlabels, dataSet1, dataSet1Name, dataSet2, dataSet2Na
     plt.savefig(fname)
     plt.show()
 
-
+# Reads in two datasets
+# Prints the percentage change between the two attributes
 def percentageChange(dataSet1, dataSet2):
     numUnchanged = 0
     for data in dataSet2:

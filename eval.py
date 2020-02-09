@@ -18,18 +18,30 @@ import classification as cp
 
 
 class Evaluator(object):
-    """ Class to perform evaluation
-    """
 
     @staticmethod
-    def getAccuracyOfDecisionTree(decisionTree, attributes, groundTruths):
-        predictions = decisionTree.predict(attributes)
-        # print(predictions)
-        # print(attributes)
-        # print(predictions)
-        confusionMatrix = Evaluator.confusion_matrix(predictions, groundTruths)
-        #print(confusionMatrix)
-        return Evaluator.accuracy(confusionMatrix)
+    def get_accuracy_of_decision_tree(decision_tree, attributes, annotation):
+        """
+        Computes accuracy of decision tree
+        Parameters
+        ----------
+        decision_tree : DecisionTreeClassifier
+            a DecisionTreeClassifier object
+        attributes : np.array
+            an N x M dimensional numpy array containing the attributes of the dataset
+        annotation : np.array
+            an N dimensional numpy array containing the ground truth
+            class labels
+
+        Returns
+        -------
+        int
+            the corresponding accuracy of the dataset
+        """
+
+        predictions = decision_tree.predict(attributes)
+        confusion_matrix = Evaluator.confusion_matrix(predictions, annotation)
+        return Evaluator.accuracy(confusion_matrix)
 
     @staticmethod
     def confusion_matrix(prediction, annotation, class_labels=None):
@@ -61,10 +73,6 @@ class Evaluator(object):
 
         confusion = np.zeros((len(class_labels), len(class_labels)), dtype=np.int)
 
-        #######################################################################
-        #                 ** TASK 3.1: COMPLETE THIS METHOD **
-        #######################################################################
-        #### NEEDS CHECKING FROM SOMEONE ELSE
         # iterate through rows and columns of the confusion matrix
         row = 0
         col = 0
@@ -73,13 +81,13 @@ class Evaluator(object):
             for predictedLetter in class_labels:
                 counter = 0
                 for index in range(np.size(prediction)):
-                    if (trueLetter == annotation[index] and predictedLetter == prediction[index]):
+                    if trueLetter == annotation[index] and predictedLetter == prediction[index]:
                         counter += 1
                     confusion[row][col] = counter
-                col += 1
-                col %= len(class_labels)
-            row += 1
-            row %= len(class_labels)
+                row += 1
+                row %= len(class_labels)
+            col += 1
+            col %= len(class_labels)
 
         return confusion
 
@@ -99,19 +107,15 @@ class Evaluator(object):
             The accuracy (between 0.0 to 1.0 inclusive)
         """
 
-        #######################################################################
-        #                 ** TASK 3.2: COMPLETE THIS METHOD **
-        #######################################################################
-
         # accuracy is given by instanceWhen(TRUTH == PREDICTED) / ALL EVENTS
-        #### NEEDS CHECKING FROM SOMEONE ELSE
-        truePostive = np.trace(confusion)
-        allEvents = np.sum(confusion)
 
-        if (truePostive == 0 or allEvents == 0):
+        true_positive = np.trace(confusion)
+        all_events = np.sum(confusion)
+
+        if true_positive == 0 or all_events == 0:
             return 0
         else:
-            return truePostive / allEvents
+            return true_positive / all_events
 
     @staticmethod
     def precision(confusion):
@@ -134,28 +138,23 @@ class Evaluator(object):
             The macro-averaged precision score across C classes.
         """
 
+        # precision (per characteristic) == TRUTH (trace part) / TOTAL PREDICTION THAT LETTER (row)
+
         # Initialise array to store precision for C classes
         p = np.zeros((len(confusion),))
 
-        #######################################################################
-        #                 ** TASK 3.3: COMPLETE THIS METHOD **
-        #######################################################################
-        #### NEEDS CHECKING FROM SOMEONE ELSE
-        # precision (per characteristic) == TRUTH / TOTAL PREDICTION THAT LETTER
+        # iterate through each row of the confusion matrix
+        # finding precision for ach ground truth according to equation above
         index = 0
+
         for letterIndex in range(np.size(confusion[:, -1])):
-            if (np.sum(confusion[:, letterIndex]) == 0):
+            if np.sum(confusion[:, letterIndex]) == 0:
                 p[index] = 0
             else:
-                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:, letterIndex])
+                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[letterIndex])
             index += 1
 
-        # You will also need to change this
-        macro_p = 0
-        # finding average of the precision score for global
-        macro_p = np.average(p)
-
-        return (p, macro_p)
+        return p, np.average(p)
 
     @staticmethod
     def recall(confusion):
@@ -182,25 +181,20 @@ class Evaluator(object):
         # Initialise array to store recall for C classes
         r = np.zeros((len(confusion),))
 
-        #######################################################################
-        #                 ** TASK 3.4: COMPLETE THIS METHOD **
-        #######################################################################
-        #### NEEDS CHECKING FROM SOMEONE ELSE
-        # recall (per characteristic) == TRUTH / TOTAL TIMES THAT WAS THE TRUE LETTER
+        # recall (per characteristic) == TRUTH (trace part) / TOTAL TIMES THAT WAS THE TRUE LETTER (column)
+
+        # iterate through each row of the confusion matrix
+        # finding recall for each ground truth according to equation above
         index = 0
+
         for letterIndex in range(np.size(confusion[:, -1])):
             if (np.sum(confusion[letterIndex]) == 0):
                 r[index] = 0
             else:
-                r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[letterIndex])
+                r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:, letterIndex])
             index += 1
 
-        # You will also need to change this
-        macro_r = 0
-        # finding average of the recall score for global
-        macro_r = np.average(r)
-
-        return (r, macro_r)
+        return r, np.average(r)
 
     def f1_score(self, confusion):
         """ Computes the f1 score per class given a confusion matrix.
@@ -226,25 +220,19 @@ class Evaluator(object):
         # Initialise array to store recall for C classes
         f = np.zeros((len(confusion),))
 
-        #######################################################################
-        #                 ** YOUR TASK: COMPLETE THIS METHOD **
-        #######################################################################
-        #### NEEDS CHECKING FROM SOMEONE ELSE
+        # f1 (per characteristic) == 2 * (PRECISION * RECALL) / (PRECISION + RECALL)
+
         precision, macro_p = self.precision(confusion)
         recall, macro_r = self.recall(confusion)
 
+        # iterate through each row of the confusion matrix
+        # finding f1 for each ground truth according to equation above
         index = 0
         for letterIndex in range(np.size(confusion[:, -1])):
             f[index] = 2 * (precision[index] * recall[index]) / (recall[index] + precision[index])
             index += 1
 
-        # You will also need to change this
-        macro_f = 0
-
-        # finding average of the f1 for global
-        macro_f = np.average(f)
-
-        return (f, macro_f)
+        return f, np.average(f)
 
 
 if __name__ == "__main__":

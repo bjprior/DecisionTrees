@@ -14,20 +14,35 @@ import matplotlib.pyplot as plt
 
 import eval
 
+
 class LeafNode(object):
     """
-    A leafNode
+    A LeafNode
 
     Attributes
     ----------
-    A letter which contains the majority label
+    letter: String
+        A letter which contains the majority label
+
+    leafSize: int
+        An integer representing the number of elements (rows of dataset) present in the LeafNode
+
+    entropy: int
+        An integer representing the entropy of the LeafNode
+
+    Methods
+    ----------
+    NodeHeight:
+        # Returns 0 (since height of LeafNode is 0)
+
+    prune:
+        # Returns false and itself since ?????????????????????????????
 
     """
 
     def __init__(self, letter, leafSize):
         self.letter = letter
         self.leafSize = leafSize
-        # print("LeafNode: " + str(letter))
 
     def __init__(self, letter, leaf_total, entropy=0):
         self.letter = letter
@@ -38,9 +53,26 @@ class LeafNode(object):
         return chr(self.letter) + "\n" + "Tot:" + str(self.leaf_total) + "\n" + "S:" + str(round(self.entropy, 2))
 
     def NodeHeight(self):
+        """
+        Returns the height of LeafNode
+
+        Returns
+        -------
+            0 (since height of LeafNode is zero)
+
+        """
         return 0
 
     def prune(self):
+        """
+        Returns ?? the height of LeafNode
+
+        Returns
+        -------
+        0:
+            height of LeafNode is zero
+
+        """
         return False, self
 
 
@@ -56,19 +88,28 @@ class Node(object):
     threshold: int
         The threshold value on which the data will be split for the attribute given
 
-    left_node: Node
-        The Node to the left, either leads to another Node or a LeafNode(label)
+    left_data: Node
+        The data for the Node to the left, either leads to another Node or a LeafNode(label)
 
-    right_node: Node
-        The Node to the right, either leads to another Node or a LeafNode(label)
+    right_data: Node
+        The data for the Node to the right, either leads to another Node or a LeafNode(label)
+
+    letters: [int]
+        An array of ASCII integers representing the characteristics  present in the Node
+
+    entropy: int
+        An integer representing the entropy of the Node
+
+    node_total: int
+        An integer representing the number of elements (rows of the dataset) in the Node
+
     """
 
-    def __init__(self, split_col, threshold, leftData, rightData, letters, entropy, node_total):
-        # print("Node: " + str(split_col) + " " + str(threshold))
+    def __init__(self, split_col, threshold, left_data, right_data, letters, entropy, node_total):
         self.split_col = split_col
         self.threshold = threshold
-        self.left_node = Node.induceDecisionTree(leftData)
-        self.right_node = Node.induceDecisionTree(rightData)
+        self.left_node = Node.induceDecisionTree(left_data)
+        self.right_node = Node.induceDecisionTree(right_data)
         self.letters = letters
         self.entropy = entropy
         self.node_total = node_total
@@ -78,24 +119,52 @@ class Node(object):
             self.node_total) + "\n" + "E:" + str(round(self.entropy, 2)) + "\n" + str(self.letters) + "\n"
 
     def NodeHeight(self):
+        """
+        Returns the height of Node
+
+        Returns
+        -------
+        int:
+            the height of the Node
+
+        """
         return 1 + max(self.left_node.NodeHeight(), self.right_node.NodeHeight())
 
     @staticmethod
-    def induceDecisionTree(dataSet):
-        attributeRepeats = len(np.unique(dataSet[:, :-1], axis=0))
-        classificationRepeats = len(np.unique(dataSet[:, -1]))
-        node_total = len(dataSet)
-        entropy = ent.calcEntropy(dataSet[:, -1])
+    def induceDecisionTree(data_set):
+        """
+        Creates a Node with attributes corresponding to highest Information Gain
 
-        if (len(dataSet) == 1) or (attributeRepeats == 1) or (classificationRepeats == 1):
-            return LeafNode(dataSet[0][-1], node_total, entropy)
+        Parameters
+        ----------
+        data_set
+        Returns the height of Node
 
-        node_total = len(dataSet)
-        (unique, counts) = np.unique(dataSet[:, -1], return_counts=True)
+        Returns
+        -------
+        int:
+            the height of the Node
+
+        """
+        # Counting the unique number of attributes/characteristics in order to assess whether dataset is separable
+        attributeRepeats = len(np.unique(data_set[:, :-1], axis=0))
+        classificationRepeats = len(np.unique(data_set[:, -1]))
+        node_total = len(data_set)
+        entropy = ent.calcEntropy(data_set[:, -1])
+
+        # Can only seperate the dataset further if the dataset has more than 1 classification/attribute sequence
+        # else return a LeafNode
+        if (len(data_set) == 1) or (attributeRepeats == 1) or (classificationRepeats == 1):
+            return LeafNode(data_set[0][-1], node_total, entropy)
+
+        node_total = len(data_set) #### DO WE NEED TO DO THIS TWICE
+        # create an array for frequency for each classification
+        (unique, counts) = np.unique(data_set[:, -1], return_counts=True)
         frequencies = np.asarray((unique, counts)).T
         letters = frequencies
 
-        split_col, threshold, leftChildData, rightChildData = ent.findBestNode(dataSet)
+        # find the best Node for the next separation
+        split_col, threshold, leftChildData, rightChildData = ent.findBestNode(data_set)
 
         return Node(split_col, threshold, leftChildData, rightChildData, letters, entropy, node_total)
 
@@ -145,10 +214,13 @@ class DecisionTreeClassifier(object):
 
     Methods
     -------
-    train(X, y)
-        Constructs a decision tree from data X and label y
-    predict(X)
-        Predicts the class label of samples X
+    train(attributes, classifications):
+        # Reads in attributes and classification
+        # Constructs their corresponding decision tree
+
+    predict(attributeInstances):
+        # Reads in attributesInstances
+        # Predicts the classifications for each instance in attributeInstances, returning an array of these predictions
 
     """
 
@@ -156,15 +228,15 @@ class DecisionTreeClassifier(object):
         self.is_trained = False
         self.rootNode = None
 
-    def train(self, x, y):
+    def train(self, attribute, classification):
         """ Constructs a decision tree classifier from data
 
         Parameters
         ----------
-        x : numpy.array
+        attribute : numpy.array
             An N by K numpy array (N is the number of instances, K is the
             number of attributes)
-        y : numpy.array
+        classification : numpy.array
             An N-dimensional numpy array
 
         Returns
@@ -175,13 +247,13 @@ class DecisionTreeClassifier(object):
         """
 
         # Make sure that x and y have the same number of instances
-        assert x.shape[0] == len(y), \
+        assert attribute.shape[0] == len(classification), \
             "Training failed. x and y must have the same number of instances."
 
         #######################################################################
         #                 ** TASK 2.1: COMPLETE THIS METHOD **
         #######################################################################
-        self.rootNode = Node.induceDecisionTree(dr.mergeAttributesAndCharacteristics(x, y))
+        self.rootNode = Node.induceDecisionTree(dr.mergeAttributesAndCharacteristics(attribute, classification))
 
         # set a flag so that we know that the classifier has been trained
         self.is_trained = True
@@ -195,7 +267,7 @@ class DecisionTreeClassifier(object):
 
         Parameters
         ----------
-        x : numpy.array
+        attributeInstances : numpy.array
             An N by K numpy array (N is the number of samples, K is the
             number of attributes)
 
@@ -203,7 +275,7 @@ class DecisionTreeClassifier(object):
         -------
         numpy.array
             An N-dimensional numpy array containing the predicted class label
-            for each instance in x
+            for each instance in attributeInstances
         """
 
         # make sure that classifier has been trained before predicting
@@ -213,13 +285,9 @@ class DecisionTreeClassifier(object):
         # set up empty list (will convert to numpy array)
         predictions = list()
 
-        # predictions = np.zeros((attributeInstances.shape[0],), dtype=np.object)
-
         #######################################################################
         #                 ** TASK 2.2: COMPLETE THIS METHOD **
         #######################################################################
-
-        # remember to change this if you rename the variable
 
         for attributeList in attributeInstances:
             predictions.append((DecisionTreeClassifier.predictInstance(self.rootNode, attributeList)))
@@ -228,9 +296,10 @@ class DecisionTreeClassifier(object):
 
     @staticmethod
     def predictInstance(node, attributeList):
+        # Stopping condition when LeafNode is reached
         if isinstance(node, LeafNode):
             return chr(node.letter)
-        else:
+        else: # go down Node which satisfy the instance's attribute value
             if int(attributeList[node.split_col]) <= int(node.threshold):
                 return DecisionTreeClassifier.predictInstance(node.left_node, attributeList)
             else:

@@ -4,8 +4,27 @@ import classification as cls
 import eval as ev
 from scipy import stats
 
-
 def k_fold_cross_validation(data_set, k):
+    """
+    Computes accuracy
+
+    Also returns best tree from a cross validation
+
+    Parameters
+    ----------
+    data_set: np.array
+        a NxM dimensional numpy array representing the attributes of the dataset
+
+    k: int
+        an integer parameter needed for cross validation
+
+    Returns
+    -------
+    int:
+        computes accuracy of the dataset
+    DecisionTreeClassifier:
+        the best decision tree from the cross validation
+    """
     accuracy = np.zeros(k)
     tree = cls.DecisionTreeClassifier()
     best_tree = cls.DecisionTreeClassifier()
@@ -78,14 +97,17 @@ def k_decision_trees(training, testing, k):
 
 
 def split_set(data_set, k, fold):
+    # edge case for when fold is out of range
     if fold > k or fold < 1:
         print("Incorrect usage: fold value greater than k")
         return
-    elif k > len(data_set) or k < 2:  # Check for error in k input and return error if so
+    # edge case for when splitting number k is out of range
+    elif k > len(data_set) or k < 2:
         print("Incorrect usage: Split value, k greater than sample size or less than 2")
         return
     else:
         width = len(data_set[0])
+        # dividing array in k equal parts
         data_splits = np.split(data_set, k)
         training_set = np.empty(shape=[0, width], dtype=int)
 
@@ -97,12 +119,9 @@ def split_set(data_set, k, fold):
             else:
                 training_set = np.concatenate((training_set, data_splits[i]), axis=0)
 
-        training_set = np.asarray(training_set)
-
-        return testing_set, validation_set, training_set
+        return testing_set, np.asarray(training_set)
 
 
-# Answer for
 def standard_dev(accuracy, k, n):
     errors = np.ones(k) - accuracy
     std_dev = np.sqrt((errors * accuracy) / n)

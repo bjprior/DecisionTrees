@@ -246,53 +246,32 @@ class Evaluator(object):
 
         return (f, macro_f)
 
+    @staticmethod
+    def print_eval(train_data, test_data):
+        data = dr.parseFile(train_data)
+        x = data[0]
+        y = data[1]
+
+        tree = cp.DecisionTreeClassifier()
+        tree.train(x, y)
+        test = dr.parseFile(test_data)
+        xtruth = test[0]
+        ytruth = test[1]
+        test = dr.mergeAttributesAndCharacteristics(xtruth, ytruth)
+        predictions = tree.predict(test)
+        e = Evaluator()
+        a = e.confusion_matrix(ytruth, predictions)
+        print("Order of matrix is ACEGOQ")
+        print("Confusion" + "\n" + str(a))
+        print("Accuracy: " + str(e.accuracy(a)))
+        print("Recall: " + str(e.recall(a)))
+        print("Precision: " + str(e.precision(a)))
+        print("F1score: " + str(e.f1_score(a)))
+
 
 if __name__ == "__main__":
-    data = dr.parseFile("data/train_full.txt")
     print("RESULTS FOR TRAIN_FULL.TXT:")
-    x, y = data[:, :-1], data.T[-1]
-    tree = cp.DecisionTreeClassifier()
-    tree.train(x, y)
-    test = dr.parseFile("data/test.txt")
-    xtruth, ytruth = test[:, :-1], test.T[-1]
-    predictions = tree.predict(test)
-    e = Evaluator()
-    a = e.confusion_matrix(ytruth, predictions)
-    print("Order of matrix is ACEGOQ")
-    print("confusion" + "\n" + str(a))
-    print("accuracy: " + str(e.accuracy(a)))
-    print("Recall: " + str(e.recall(a)))
-    print("Precision: " + str(e.precision(a)))
-    print("F1score: " + str(e.f1_score(a)))
-
-    data = dr.parseFile("data/train_noisy.txt")
+    Evaluator.print_eval("data/train_full.txt", "data/test.txt")
     print("RESULTS FOR TRAIN_NOISY.TXT:")
-    x, y = data[:, :-1], data.T[-1]
-    tree = cp.DecisionTreeClassifier()
-    tree.train(x, y)
-    test = dr.parseFile("data/test.txt")
-    xtruth, ytruth = test[:, :-1], test.T[-1]
-    predictions = tree.predict(test)
-    e = Evaluator()
-    a = e.confusion_matrix(ytruth, predictions)
-    print("confusion" + "\n" + str(a))
-    print("accuracy: " + str(e.accuracy(a)))
-    print("Recall: " + str(e.recall(a)))
-    print("Precision: " + str(e.precision(a)))
-    print("F1score: " + str(e.f1_score(a)))
-
+    Evaluator.print_eval("data/train_noisy.txt", "data/test.txt")
     print("RESULTS FOR TRAIN_SUB.TXT:")
-    data = dr.parseFile("data/train_sub.txt")
-    x, y = data[:, :-1], data.T[-1]
-    tree = cp.DecisionTreeClassifier()
-    tree.train(x, y)
-    test = dr.parseFile("data/test.txt")
-    xtruth, ytruth = test[:, :-1], test.T[-1]
-    predictions = tree.predict(test)
-    e = Evaluator()
-    a = e.confusion_matrix(ytruth, predictions)
-    print("confusion" + "\n" + str(a))
-    print("accuracy: " + str(e.accuracy(a)))
-    print("Recall: " + str(e.recall(a)))
-    print("Precision: " + str(e.precision(a)))
-    print("F1score: " + str(e.f1_score(a)))

@@ -69,9 +69,7 @@ def split_set(data_set, k, fold):
             else:
                 training_set = np.concatenate((training_set, data_splits[i]), axis=0)
 
-        training_set = np.asarray(training_set)
-
-        return testing_set, training_set
+        return testing_set, np.asarray(training_set)
 
 
 def standard_dev(accuracy, k, n):

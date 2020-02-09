@@ -49,7 +49,29 @@ and invoke the methods defined in ``classification.py`` and ``eval.py``.
 
 ### Instructions
 
-< Insert your own instructions here >
+In order to run this program, you do not need to build any code. Simply run the ``main`` method in the ``main.py`` code.
+
+
+The ``main`` method will:
+- load the data set from the file's path
+- train the decision tree 
+- Evaluate the predictions using a confusion matrix, computing accuracy, macro-precision and macro-recall
+- Prune the decision tree
+- Evaluate changes post-pruning
+
+These steps will be printed to the ``terminal`` for user-readability
+
+
+### Important Consideration
+You may choose to change the data sets by changing the pathnames inside the ``parseFile`` method.
+Were you to use a different data set from those provided in this Coursework, a few considerations on the type of data 
+ought to be outlined. Each instance of the data set should:
+
+- Should be on a separate line of the file
+
+- Contain real-number attributes, seperated by a ','
+
+- Contain a single classification. This will be coverted to its ASCII value in the implementation
 
 
 

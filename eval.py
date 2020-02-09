@@ -13,7 +13,7 @@
 ##############################################################################
 
 import numpy as np
-
+import dataReader as dr
 
 class Evaluator(object):
     """ Class to perform evaluation
@@ -22,11 +22,7 @@ class Evaluator(object):
     @staticmethod
     def getAccuracyOfDecisionTree(decisionTree, attributes, groundTruths):
         predictions = decisionTree.predict(attributes)
-        # print(predictions)
-        # print(attributes)
-        # print(predictions)
         confusionMatrix = Evaluator.confusion_matrix(predictions, groundTruths)
-        #print(confusionMatrix)
         return Evaluator.accuracy(confusionMatrix)
 
     @staticmethod
@@ -200,7 +196,8 @@ class Evaluator(object):
 
         return (r, macro_r)
 
-    def f1_score(self, confusion):
+    @staticmethod
+    def f1_score(confusion):
         """ Computes the f1 score per class given a confusion matrix.
 
         Also returns the macro-averaged f1-score across classes.
@@ -228,8 +225,8 @@ class Evaluator(object):
         #                 ** YOUR TASK: COMPLETE THIS METHOD **
         #######################################################################
         #### NEEDS CHECKING FROM SOMEONE ELSE
-        precision, macro_p = self.precision(confusion)
-        recall, macro_r = self.recall(confusion)
+        precision, macro_p = Evaluator.precision(confusion)
+        recall, macro_r = Evaluator.recall(confusion)
 
         index = 0
         for letterIndex in range(np.size(confusion[:, -1])):

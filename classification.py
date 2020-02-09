@@ -40,10 +40,6 @@ class LeafNode(object):
     def NodeHeight(self):
         return 0
 
-    def prune(self):
-        return False, self
-
-
 class Node(object):
     """
     A Node
@@ -252,9 +248,10 @@ class DecisionTreeClassifier(object):
         y = 100
         # midpoint of the window to plot root
         midx = (x1 + x2) / 2
+
+        plt.figure(figsize=(5, 5))
         plt.axis('off')
 
-        plt.figure(figsize=(30, 20))
         # plot root node as a rectangle
         # ha= horizonatal alignment, va= vertical alignment
         # text is plotted using coordinates midx (middle of width of screen) and y2 (top of screen)
@@ -302,7 +299,7 @@ class DecisionTreeClassifier(object):
 
 
 if __name__ == "__main__":
-    trainingData = dr.parseFile("data/train_noisy.txt")
+    trainingData = dr.parseFile("data/train_full.txt")
     validationData = dr.parseFile("data/validation.txt")
     testData = dr.parseFile("data/test.txt")
 

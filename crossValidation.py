@@ -25,7 +25,9 @@ def k_fold_cross_validation(data_set, k, pruning=False):
         # Train tree
         testing_y = [chr(i) for i in testing.T[-1]]
 
-        tree.train(training_x, training_y)
+        trees.append(cls.DecisionTreeClassifier())
+        trees[i-1].train(training_x, training_y)
+        tree = trees[i-1]
 
         if pruning:
             predictions = tree.predict(testing)
@@ -35,9 +37,6 @@ def k_fold_cross_validation(data_set, k, pruning=False):
             tree.prune((validation[:, :-1], [chr(i) for i in validation[:, -1]]))
 
         predictions = tree.predict(testing)
-
-        # Save Tree
-        trees.append(tree)
 
         # Evaluation metrics
         eval = ev.Evaluator()
@@ -49,11 +48,11 @@ def k_fold_cross_validation(data_set, k, pruning=False):
         confusion = ev.Evaluator.confusion_matrix(predictions, testing_y)
         postPruneConfMatrix.append(confusion)
         accuracy[i - 1] = ev.Evaluator.accuracy(confusion)
-        if accuracy[i - 1] > max_accuracy:
-            best_tree = tree
-        print("Accuracy(" + str(i) + "):" + str(accuracy[i - 1]))
 
-    return accuracy, best_tree, trees
+        if accuracy[i - 1] > max_accuracy:
+            best_tree = trees[i-1]
+            max_accuracy = accuracy[i-1]
+
     if pruning:
         print("Pre pruning metrics")
         analyseListOfConfMatrix(prePruneConfMatrix)
@@ -78,12 +77,14 @@ def analyseListOfConfMatrix(confMatrixList):
 
 
 def k_decision_trees(testing, k, k_trees):
+
     predictions = list()
 
     # Get predictions for each tree
     for i in range(1, k + 1):
         predictions.append(k_trees[i - 1].predict(testing))
 
+    # Set up arrays to return
     prediction = np.array(predictions)
     prediction.astype(str)
     best_predictions = np.zeros(len(testing))

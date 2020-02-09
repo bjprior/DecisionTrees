@@ -5,7 +5,7 @@ import eval as ev
 from scipy import stats
 
 
-def k_fold_cross_validation(data_set, k):
+def k_fold_cross_validation(data_set, k, pruning=False):
     accuracy = np.zeros(k)
     tree = cls.DecisionTreeClassifier()
     best_tree = cls.DecisionTreeClassifier()
@@ -14,29 +14,35 @@ def k_fold_cross_validation(data_set, k):
     postPruneConfMatrix = []
 
     for i in range(1, k + 1):
-        testing, validation, training = split_set(data_set, k, i)
+        split = split_set(data_set, k, i, pruning)
+        testing = split[0]
+        training = split[1]
         training_x = training[:, :-1]
         training_y = [chr(i) for i in training.T[-1]]
         testing_y = [chr(i) for i in testing.T[-1]]
 
         tree.train(training_x, training_y)
-        predictions = tree.predict(testing)
-        confusion = ev.Evaluator.confusion_matrix(predictions, testing_y)
-        prePruneConfMatrix.append(confusion)
 
-        tree.prune((validation[:, :-1], [chr(i) for i in validation[:, -1]]))
+        if pruning:
+            predictions = tree.predict(testing)
+            confusion = ev.Evaluator.confusion_matrix(predictions, testing_y)
+            prePruneConfMatrix.append(confusion)
+            validation = split[2]
+            tree.prune((validation[:, :-1], [chr(i) for i in validation[:, -1]]))
+
         predictions = tree.predict(testing)
         confusion = ev.Evaluator.confusion_matrix(predictions, testing_y)
-        accuracy[i-1] = ev.Evaluator.accuracy(confusion)
-        if accuracy[i-1] > max_accuracy:
-            best_tree = tree
-        print("Post prune Accuracy(" + str(i) + "):" + str(accuracy[i-1]))
         postPruneConfMatrix.append(confusion)
+        accuracy[i - 1] = ev.Evaluator.accuracy(confusion)
+        if accuracy[i - 1] > max_accuracy:
+            best_tree = tree
+        print("Accuracy(" + str(i) + "):" + str(accuracy[i - 1]))
 
-    print("Pre pruning metrics")
-    analyseListOfConfMatrix(prePruneConfMatrix)
-    print("Post pruning results")
-    analyseListOfConfMatrix(postPruneConfMatrix)
+    if pruning:
+        print("Pre pruning metrics")
+        analyseListOfConfMatrix(prePruneConfMatrix)
+        print("Post pruning results")
+        analyseListOfConfMatrix(postPruneConfMatrix)
 
     return accuracy, best_tree
 
@@ -61,7 +67,9 @@ def k_decision_trees(training, testing, k):
 
     for i in range(1, k + 1):
         trees.append(cls.DecisionTreeClassifier())
-        testing_new, validation, training_new = split_set(training, k, i)
+        split = split_set(training, k, i)
+        testing_new = split[0]
+        training_new = split[1]
         training_x = training_new[:, :-1]
         training_y = [chr(i) for i in training_new.T[-1]]
         trees[i - 1].train(training_x, training_y)
@@ -77,7 +85,7 @@ def k_decision_trees(training, testing, k):
     return np.array(best_predictions[0, :])
 
 
-def split_set(data_set, k, fold):
+def split_set(data_set, k, fold, createValidationSet=False):
     if fold > k or fold < 1:
         print("Incorrect usage: fold value greater than k")
         return
@@ -88,18 +96,19 @@ def split_set(data_set, k, fold):
         width = len(data_set[0])
         data_splits = np.split(data_set, k)
         training_set = np.empty(shape=[0, width], dtype=int)
+        validation_set = []
 
         for i in range(len(data_splits)):
             if i == fold % k:
                 testing_set = np.array(data_splits[i])
-            elif i == (fold + 1) % k:
+            elif createValidationSet and i == (fold + 1) % k:
                 validation_set = np.array(data_splits[i])
             else:
                 training_set = np.concatenate((training_set, data_splits[i]), axis=0)
 
         training_set = np.asarray(training_set)
 
-        return testing_set, validation_set, training_set
+        return testing_set, training_set, validation_set
 
 
 # Answer for
@@ -166,28 +175,28 @@ if __name__ == "__main__":
 
     print_results(k_predict, testing_y, "K-Fold Mode Predict")
 
- #   plt.figure()
- #    depth = np.array([18, 18, 20, 16, 17, 20, 17, 18, 18, 17])
- #    accuracy = np.array([0.84102564, 0.87692308, 0.88461538, 0.85641026, 0.83846154, 0.85384615,
- # 0.83589744, 0.84358974, 0.83589744, 0.85897436])
- #    plt.scatter(depth, accuracy, label="train_noisy.txt unpruned")
- #    depth = np.array(([15, 15, 16, 15, 16, 16, 15, 17, 16, 15]))
- #    accuracy = np.array([0.82051282, 0.83846154, 0.87948718, 0.85641026, 0.83333333, 0.87179487,
- # 0.85641026, 0.83333333, 0.82307692, 0.87692308])
- #    plt.scatter(depth, accuracy, label="train_noisy.txt pruned")
- #    depth = np.array([19, 19, 22, 19, 19, 21, 20, 18, 20, 20])
- #    accuracy = np.array([0.90769231, 0.92051282, 0.91282051, 0.93589744, 0.90769231, 0.9025641,
- # 0.88461538, 0.91538462, 0.92307692, 0.88974359])
- #    plt.scatter(depth, accuracy, label="train_full.txt unpruned")
- #    depth = np.array([16, 17, 17, 17, 18, 19, 19, 14, 17, 19])
- #    accuracy = [0.88461538, 0.88461538, 0.87435897, 0.90512821, 0.9, 0.9,
- #     0.87692308, 0.86410256, 0.89487179, 0.87692308]
- #    plt.scatter(depth, accuracy, label="train_full.txt pruned")
- #
- #    # print(np.mean(depth))
- #    # print(np.std(depth))
- #    plt.xlabel("Max Node Depth")
- #    plt.ylabel("Accuracy (%)")
- #    plt.legend()
- #    plt.savefig("PruningAccuracy.png")
- #    plt.show()
+#   plt.figure()
+#    depth = np.array([18, 18, 20, 16, 17, 20, 17, 18, 18, 17])
+#    accuracy = np.array([0.84102564, 0.87692308, 0.88461538, 0.85641026, 0.83846154, 0.85384615,
+# 0.83589744, 0.84358974, 0.83589744, 0.85897436])
+#    plt.scatter(depth, accuracy, label="train_noisy.txt unpruned")
+#    depth = np.array(([15, 15, 16, 15, 16, 16, 15, 17, 16, 15]))
+#    accuracy = np.array([0.82051282, 0.83846154, 0.87948718, 0.85641026, 0.83333333, 0.87179487,
+# 0.85641026, 0.83333333, 0.82307692, 0.87692308])
+#    plt.scatter(depth, accuracy, label="train_noisy.txt pruned")
+#    depth = np.array([19, 19, 22, 19, 19, 21, 20, 18, 20, 20])
+#    accuracy = np.array([0.90769231, 0.92051282, 0.91282051, 0.93589744, 0.90769231, 0.9025641,
+# 0.88461538, 0.91538462, 0.92307692, 0.88974359])
+#    plt.scatter(depth, accuracy, label="train_full.txt unpruned")
+#    depth = np.array([16, 17, 17, 17, 18, 19, 19, 14, 17, 19])
+#    accuracy = [0.88461538, 0.88461538, 0.87435897, 0.90512821, 0.9, 0.9,
+#     0.87692308, 0.86410256, 0.89487179, 0.87692308]
+#    plt.scatter(depth, accuracy, label="train_full.txt pruned")
+#
+#    # print(np.mean(depth))
+#    # print(np.std(depth))
+#    plt.xlabel("Max Node Depth")
+#    plt.ylabel("Accuracy (%)")
+#    plt.legend()
+#    plt.savefig("PruningAccuracy.png")
+#    plt.show()

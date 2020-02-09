@@ -82,10 +82,10 @@ class Evaluator(object):
                     if trueLetter == annotation[index] and predictedLetter == prediction[index]:
                         counter += 1
                     confusion[row][col] = counter
-                row += 1
-                row %= len(class_labels)
-            col += 1
-            col %= len(class_labels)
+                col += 1
+                col %= len(class_labels)
+            row += 1
+            row %= len(class_labels)
 
         return confusion
 
@@ -136,7 +136,7 @@ class Evaluator(object):
             The macro-averaged precision score across C classes.
         """
 
-        # precision (per characteristic) == TRUTH (trace part) / TOTAL PREDICTION THAT LETTER (row)
+        # precision (per characteristic) == TRUTH (trace part) / TOTAL PREDICTION THAT LETTER (column)
 
         # Initialise array to store precision for C classes
         p = np.zeros((len(confusion),))
@@ -149,7 +149,7 @@ class Evaluator(object):
             if np.sum(confusion[:, letterIndex]) == 0:
                 p[index] = 0
             else:
-                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[letterIndex])
+                p[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:, letterIndex])
             index += 1
 
         return p, np.average(p)
@@ -179,7 +179,7 @@ class Evaluator(object):
         # Initialise array to store recall for C classes
         r = np.zeros((len(confusion),))
 
-        # recall (per characteristic) == TRUTH (trace part) / TOTAL TIMES THAT WAS THE TRUE LETTER (column)
+        # recall (per characteristic) == TRUTH (trace part) / TOTAL TIMES THAT WAS THE TRUE LETTER (row)
 
         # iterate through each row of the confusion matrix
         # finding recall for each ground truth according to equation above
@@ -189,7 +189,7 @@ class Evaluator(object):
             if (np.sum(confusion[letterIndex]) == 0):
                 r[index] = 0
             else:
-                r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[:, letterIndex])
+                r[index] = confusion[letterIndex][letterIndex] / np.sum(confusion[letterIndex])
             index += 1
 
         return r, np.average(r)

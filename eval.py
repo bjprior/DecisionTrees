@@ -261,7 +261,7 @@ class Evaluator(object):
         test = dr.mergeAttributesAndCharacteristics(xtruth, ytruth)
         predictions = tree.predict(test)
         e = Evaluator()
-            a = e.confusion_matrix(ytruth, predictions)
+        a = e.confusion_matrix(ytruth, predictions)
         print("Order of matrix is ACEGOQ")
         print("Confusion" + "\n" + str(a))
         print("Accuracy: " + str(e.accuracy(a)))

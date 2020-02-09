@@ -16,7 +16,6 @@ def k_fold_cross_validation(data_set, k, pruning=False):
 
     for i in range(1, k + 1):
         # Split Data into training and testing data
-        testing, training = split_set(data_set, k, i)
         split = split_set(data_set, k, i, pruning)
         testing = split[0]
         training = split[1]
@@ -61,7 +60,7 @@ def k_fold_cross_validation(data_set, k, pruning=False):
         print("Post pruning results")
         analyseListOfConfMatrix(postPruneConfMatrix)
 
-    return accuracy, best_tree
+    return accuracy, best_tree, trees
 
 
 def analyseListOfConfMatrix(confMatrixList):
@@ -77,23 +76,12 @@ def analyseListOfConfMatrix(confMatrixList):
     print("Recall: " + str(np.mean(metrics[:, 2])) + " " + str(np.std(metrics[:, 2])))
     print("F1: " + str(np.mean(metrics[:, 3])) + " " + str(np.std(metrics[:, 3])))
 
-
-def k_decision_trees(training, testing, k):
-    trees = []
 def k_decision_trees(testing, k, k_trees):
     predictions = list()
 
     # Get predictions for each tree
     for i in range(1, k + 1):
         predictions.append(k_trees[i - 1].predict(testing))
-        trees.append(cls.DecisionTreeClassifier())
-        split = split_set(training, k, i)
-        testing_new = split[0]
-        training_new = split[1]
-        training_x = training_new[:, :-1]
-        training_y = [chr(i) for i in training_new.T[-1]]
-        trees[i - 1].train(training_x, training_y)
-        predictions.append(trees[i - 1].predict(testing))
 
     prediction = np.array(predictions)
     prediction.astype(str)
@@ -129,7 +117,7 @@ def split_set(data_set, k, fold, createValidationSet=False):
 
     training_set = np.asarray(training_set)
 
-        return testing_set, training_set, validation_set
+    return testing_set, training_set, validation_set
 
 
 # Answer for
@@ -167,17 +155,15 @@ if __name__ == "__main__":
     full_data = dr.parseFile("data/train_full.txt")
     test_data = dr.parseFile("data/test.txt")
     full_data = dr.mergeAttributesAndCharacteristics(full_data[0], full_data[1])
-    print(full_data)
     test_data = dr.mergeAttributesAndCharacteristics(test_data[0], test_data[1])
+
     k = 10
     n = len(full_data) / k
-    accuracy, cross_tree = k_fold_cross_validation(full_data, k)
+    accuracy, best_tree, k_trees = k_fold_cross_validation(full_data, k)
 
     # Print Accuracies and Standard Deviations for Question 3.3
-    std_dev = standard_dev(accuracy, k, n)
-
-    for i in range(len(accuracy)):
-        print(str(round(accuracy[i], 4)) + " ± " + str(round(std_dev[i], 4)))
+    print("Accuracy: " + str(round(accuracy.mean(), 4)))
+    print("Standard Deviation: " + str(round(accuracy.std(), 4)))
 
     # Question 3.4
     x = full_data[:, :-1]
@@ -186,12 +172,12 @@ if __name__ == "__main__":
     Full_trained.train(x, y)
     testing_y =[chr(i) for i in test_data.T[-1]]
     full_predict = Full_trained.predict(test_data)
-    cross_predict = cross_tree.predict(test_data)
+    cross_predict = best_tree.predict(test_data)
 
     print_results(full_predict, testing_y, "Fully Trained")
     print_results(cross_predict, testing_y, "K-Fold Trained")
 
     # Question 3.5
-    k_predict = k_decision_trees(full_data, test_data, k)
+    k_predict = k_decision_trees(full_data, k, k_trees)
 
     print_results(k_predict, testing_y, "K-Fold Mode Predict")
